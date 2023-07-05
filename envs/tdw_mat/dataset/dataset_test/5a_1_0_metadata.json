@@ -1,0 +1,145 @@
+{
+    "floorplan_scene_name": "5a",
+    "floorplan_layout": 1,
+    "scene_id": 0,
+    "object_room_list": [
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "b04_orange_00",
+            "Livingroom"
+        ],
+        [
+            "f10_apple_iphone_4",
+            "Livingroom"
+        ],
+        [
+            "bread",
+            "Kitchen"
+        ],
+        [
+            "b03_loafbread",
+            "Kitchen"
+        ],
+        [
+            "b05_executive_pen",
+            "Office"
+        ],
+        [
+            "b05_executive_pen",
+            "Office"
+        ],
+        [
+            "b03_loafbread",
+            "Kitchen"
+        ],
+        [
+            "b04_lighter",
+            "Livingroom"
+        ],
+        [
+            "b04_lighter",
+            "Livingroom"
+        ],
+        [
+            "b03_burger",
+            "Kitchen"
+        ],
+        [
+            "b04_orange_00",
+            "Livingroom"
+        ],
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "f10_apple_iphone_4",
+            "Livingroom"
+        ],
+        [
+            "b05_calculator",
+            "Office"
+        ],
+        [
+            "basket_18inx18inx12iin_wicker",
+            "Livingroom"
+        ],
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "b04_banana",
+            "Livingroom"
+        ],
+        [
+            "b05_calculator",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_wicker",
+            "Livingroom"
+        ],
+        [
+            "b05_executive_pen",
+            "Livingroom"
+        ],
+        [
+            "mouse_02_vray",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_plastic_lattice",
+            "Livingroom"
+        ],
+        [
+            "teatray",
+            "Livingroom"
+        ],
+        [
+            "teatray",
+            "Livingroom"
+        ],
+        [
+            "teatray",
+            "Kitchen"
+        ],
+        [
+            "plate06",
+            "Livingroom"
+        ],
+        [
+            "teatray",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_plastic_lattice",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_wood_mesh",
+            "Livingroom"
+        ]
+    ],
+    "food": {
+        "target": 10,
+        "container": 5
+    },
+    "stuff": {
+        "target": 10,
+        "container": 5
+    },
+    "0": {
+        "x": 3.919797897338867,
+        "y": 0,
+        "z": 3.238956928253174
+    },
+    "1": {
+        "x": 0.4197978973388672,
+        "y": 0,
+        "z": -2.261043071746826
+    }
+}

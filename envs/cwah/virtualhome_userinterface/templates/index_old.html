@@ -1,0 +1,401 @@
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script type="text/javascript">
+$.ajaxSetup({
+  contentType: "application/json; charset=utf-8"
+});
+// setup some JSON to use
+var is_walking = null; 
+window.onload = function() {
+    document.onkeydown = function(e) {
+    switch(e.which) {
+        case 37: // left
+	    doWork("turnleft");
+	    break;
+
+        case 38: // up
+	    doWork("walkforward");
+	    break;
+
+        case 39: // right
+	    doWork("turnright");
+	    break;
+
+        default: return; // exit this handler for other keys
+    }
+
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+    };
+    $("#image2").on("click", function(event) {
+        var x = event.pageX - this.offsetLeft;
+        var y = event.pageY - this.offsetTop;
+	var content = {'x': x*300./400, 'y': y*300/400};
+	var content = JSON.stringify(content);
+	$.ajax({
+	    type: "POST",
+	    url: "querypix",
+	    data: content,
+	    success: function(result){
+		result = JSON.parse(result);
+		console.log(result['object_action'])
+		if (result['object_action'].length > 0){
+			getbuttons(result['object_action'])
+		}
+		$("#image").attr("src", "data:image/jpg;base64," + result['img'])
+		//$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+		$("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+		console.log(result['resp']);
+	    },
+	    async:true});
+    });
+    refreshScene(true);
+}
+
+function getbuttons(result){
+    var object_name = result[0][0]
+    $('#currentactions').empty();
+    $('#selectedobject').text(object_name[1])
+    for (var i = 0; i < result[0][1].length; i++){
+	    var room_info = '[[\"'+object_name[1]+'\", ' + object_name[0] +']]';
+	    var action_name = result[0][1][i];
+	    var button_room = "<button onclick='doWork(\""+action_name+"\", "+room_info+")'>"+action_name+"</button>";
+	    $('#currentactions').append(button_room);
+	
+    }
+    
+}
+
+function decode(encoded) {
+  let uncompressed = [];
+
+  /**
+   * Create a new array with decoded data
+   */
+  encoded.map((element, ind) => {
+    if (ind % 2 === 0) {
+      uncompressed.push(...Array(element).fill(encoded[ind + 1]));
+    }
+  });
+
+  return uncompressed;
+}
+
+function addButtons(result){
+    result = result['resp']['object_action']
+    $('#button_objects').empty()
+    $('#grab').empty()
+    $('#open').empty()
+    $('#close').empty()
+    $('#switchon').empty()
+    $('#switchoff').empty()
+    for (var i = 0; i < result.length; i++){
+	actions = result[i][1];
+	if (actions.indexOf('walktowards') > -1){
+	    var room_info = '[[\"'+result[i][0][1]+'\", ' + result[i][0][0] +']]';
+	    var button_room = "<button onclick='doWork(\"walktowards\", "+room_info+")'>"+result[i][0][1]+"</button>";
+	    $('#button_objects').append(button_room);
+	}
+	if (actions.indexOf('grab') > -1){
+	    var room_info = '[[\"'+result[i][0][1]+'\", ' + result[i][0][0] +']]';
+	    var button_room = "<button onclick='doWork(\"grab\", "+room_info+")'>"+result[i][0][1]+"</button>";
+	    $('#grab').append(button_room);
+	}
+
+	if (actions.indexOf('open') > -1){
+	    var room_info = '[[\"'+result[i][0][1]+'\", ' + result[i][0][0] +']]';
+	    var button_room = "<button onclick='doWork(\"open\", "+room_info+")'>"+result[i][0][1]+"</button>";
+	    $('#open').append(button_room);
+	}
+	if (actions.indexOf('close') > -1){
+	    var room_info = '[[\"'+result[i][0][1]+'\", ' + result[i][0][0] +']]';
+	    var button_room = "<button onclick='doWork(\"close\", "+room_info+")'>"+result[i][0][1]+"</button>";
+	    $('#close').append(button_room);
+	}
+
+	if (actions.indexOf('switchon') > -1){
+	    var room_info = '[[\"'+result[i][0][1]+'\", ' + result[i][0][0] +']]';
+	    var button_room = "<button onclick='doWork(\"switchon\", "+room_info+")'>"+result[i][0][1]+"</button>";
+	    $('#switchon').append(button_room);
+	}
+	if (actions.indexOf('switchoff') > -1){
+	    var room_info = '[[\"'+result[i][0][1]+'\", ' + result[i][0][0] +']]';
+	    var button_room = "<button onclick='doWork(\"switchoff\", "+room_info+")'>"+result[i][0][1]+"</button>";
+	    $('#switchoff').append(button_room);
+	}
+
+    }
+}
+
+
+function decreaseResolution(){
+    var resolution = 400;
+    $("#res_val").value(resolution)
+    content_json = {'instruction': 'refresh', 'res': resolution}
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "increaseres",
+	data: content,
+	success: function(result){
+	    endTime1 = new Date();
+	    result = JSON.parse(result);
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    //$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	    addRoomButtons(result['resp']['rooms'])
+	},
+	async:true});
+}
+function increaseResolution(){
+    var resolution = 600;
+    content_json = {'instruction': 'refresh', 'res': resolution}
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "increaseres",
+	data: content,
+	success: function(result){
+	    endTime1 = new Date();
+	    result = JSON.parse(result);
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    //$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	    addRoomButtons(result['resp']['rooms'])
+	},
+	async:true});
+}
+function refreshScene(include_top=false){
+    content_json = {'instruction': 'refresh'}
+    content_json['include_top'] = include_top;
+    console.log(content_json)
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "receiver",
+	data: content,
+	success: function(result){
+	    console.log(include_top);
+	    endTime1 = new Date();
+	    result = JSON.parse(result);
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    if (include_top){
+		    $("#imagetop").attr("src", "data:image/jpg;base64," + result['resp']['image_top'])
+	    }
+	    //$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	    addRoomButtons(result['resp']['rooms'])
+	},
+	async:true});
+
+}
+
+
+function addVisibleButtons(visible_objects, results){
+    console.log(visible_objects);
+    $('#visible_objects').empty();
+    console.log(results);
+    for (var i = 0; i < visible_objects.length; i++){
+	var room_info = '[[\"'+visible_objects[i][0]+'\", ' + visible_objects[i][1] +']]';
+        var button_room = $("<button>"+visible_objects[i][1]+"</button>");
+	button_room.click([results[i]], function (e){
+	    getbuttons(e.data);
+	});
+
+	$('#visible_objects').append(button_room);
+
+    }
+}
+
+function addRoomButtons(rooms){
+    $('#button_rooms').empty();
+    for (var i = 0; i < rooms.length; i++){
+	var room_info = '[[\"'+rooms[i][0]+'\", ' + rooms[i][1] +']]';
+	var button_room = "<button onclick='doWork(\"walktowards\", "+room_info+")'>"+rooms[i][0]+"</button>";
+	$('#button_rooms').append(button_room);
+
+    }
+}
+
+function resetScene(){
+    scene_id = $('#scene_id').val()
+    console.log(scene_id);
+    content_json = {'instruction': 'reset', 'scene_id': scene_id}
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "receiver",
+	data: content,
+	success: function(result){
+	    endTime1 = new Date();
+	    result = JSON.parse(result);
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    $("#imagetop").attr("src", "data:image/jpg;base64," + result['resp']['image_top'])
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	},
+	async:true});
+
+}
+
+function doWork(content_str, other_info=null) {
+	// ajax the JSON to the server
+	content_json = {'instruction': content_str, 'other_info': other_info}
+	if (content_str == 'walktowards' && other_info != null){
+	    is_walking = other_info;
+	
+	}
+	else {
+	    is_walking = null;
+	}
+	var content = JSON.stringify(content_json);
+	startTime = new Date();
+	$.post("receiver", content, function(result){
+	    $('#currentactions').empty();
+	    $('#selectedobject').text('');
+	    endTime = new Date();
+	    result = JSON.parse(result);
+	    //addButtons(result)
+	    endTime1 = new Date();
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	    //$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+	    endTime2 = new Date();
+	    //$("#image2").attr("src", "data:image/png;base64," + result['img2'])
+	    timeDiff = endTime - startTime;
+	    timeDiff /= 1000;
+	    console.log((endTime - startTime)/1000)
+	    console.log((endTime1 - startTime)/1000)
+	    console.log((endTime2 - startTime)/1000)
+	    if (is_walking != null){
+		if (result['resp']['other_info']['close_objects'].includes(is_walking[0][1]) ||
+		    result['resp']['other_info']['inside_objects'].includes(is_walking[0][1])
+		){
+		    is_walking = null;
+		     addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'])
+		}
+		else {
+		    doWork(content_str, other_info);
+		}
+		
+	    }
+	    else {
+		addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'])
+	    }
+	});
+	// stop link reloading the page
+}
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles2.css') }}">
+</head>
+<body>
+    <div class="topbuttons">
+	<h1>VirtualHome Online Simulator</h1>
+    </div>
+    <div class="topbuttons">
+	<p>
+	<ul>
+	    <li> Use the keys (front, left, right) to move around the scene</li>
+	    <li> As you move, new buttons will appear to interact with objects</li>
+	    
+	</ul>
+	</p>
+    </div>
+<br>
+<div id="canvas" style="";>
+    <div id="top_buttons" class="topbuttons">
+	<select name="Scene" id="scene_id">
+	      <option value="0"> Scene 0 </option>
+	      <option value="1"> Scene 1 </option>
+	      <option value="2"> Scene 2 </option>
+	      <option value="3"> Scene 3 </option>
+	      <option value="4"> Scene 4 </option>
+	      <option value="5"> Scene 5 </option>
+	      <option value="6"> Scene 6 </option>
+	</select>
+	<button onclick=resetScene()> Reset </button>
+	<button onclick=refreshScene()> Refresh </button>
+	<button onclick=increaseResolution()> View High Res </button>
+    </div>
+    <br>
+    <div style="width: 100%; height: 700px">
+	<div style="display: inline-block; width: 30%; vertical-align: top; margin: 10px">
+<div style="width: 100%; height: 30%; display: none; vertical-align: top; margin-bottom: 10px">
+		<div style="height: 20px">
+		    <a>Grab</a>
+		</div>
+		<div id="grab" class="buttoncontainer" style="height: calc(100% - 20px)">
+		</div>
+	    </div>
+	    <div style="height: 35%; width: 45%; display: none; vertical-align: top; margin-bottom: 10px;">
+
+		<div style="height: 20px">
+		    <a>Open</a>
+		</div>
+		<div id="open" class="buttoncontainer" style="height: calc(100% - 20px)">
+		</div>
+	    </div>
+	    <div style="height: 35%; width: 45%; display: none; vertical-align: top; margin-bottom: 10px">
+		<div style="height: 20px">
+		    <a>Close</a>
+		</div>
+		<div id="close" class="buttoncontainer" style="height: calc(100% - 20px)">
+		</div>
+	    </div>
+
+	    <div style="height: 25%; width: 45%; display: none; vertical-align: top; margin-bottom: 10px;">
+
+		<div style="height: 20px">
+		    <a>Switch On</a>
+		</div>
+		<div id="switchon" class="buttoncontainer" style="height: calc(100% - 20px)">
+		</div>
+	    </div>
+	    <div style="height: 25%; width: 45%; display: none; vertical-align: top; margin-bottom: 10px">
+		<div style="height: 20px">
+		    <a>Switch Off</a>
+		</div>
+		<div id="switchoff" class="buttoncontainer" style="height: calc(100% - 20px)">
+		</div>
+	    </div>
+
+
+	</div>
+	<div style="display: inline-block; width: 45%; vertical-align: top">
+	    <div style="display: inline-block">
+		<img style="width: 500px; display: inline-block" id="image2" src=""></img>
+	    </div>
+	    <div style="display: inline-block; width: 250px">
+		<img style="vertical-align: top; width: 250px; display: inline-block" id="image" src=""></img>
+		<img style="width: 250px; display: inline-block" id="imagetop" src=""></img>
+	    </div>
+	</div>
+	<div style="display: inline-block; height; width: 20%; vertical-align: top">
+		<div style="height: 20px">
+		</div>
+	    <div class="buttoncontainer" style="height: 100%">
+		<h4> Walk to </h4>
+		<div id="button_rooms"> </div>
+		<br>
+		<h4> Visible Objects </h4>
+		<div id="visible_objects" class="buttoncontainer" style="height: 300px">
+		</div>
+		<br>
+		<h4 id="selectedobject"></h4>
+		<div id="currentactions" class="buttoncontainer" style="height: 50px">
+		</div>
+	    </div>
+	</div>
+    </div>
+    <br><br>
+    <div style="width: 100%; height: 400px">
+	<div style="display: inline-block; padding-left: 30%; width: 5%; vertical-align: top">
+	    <h3 id="selectedobject"></h3>
+	</div>
+	<div style="display: inline-block; width: 25%; vertical-align: top">
+		<div style="height: 20px">
+		</div>
+	</div>
+    </div>
+</div>
+<div>
+</div>
+</body>

@@ -1,0 +1,22 @@
+{
+    "1": [
+        ["Kitchen", "Livingroom", "Bedroom", "Livingroom", "Livingroom", "Office"], 
+        ["Livingroom", "Livingroom", "Office", "Kitchen", "Office", "Livingroom"], 
+        ["Livingroom", "Kitchen", "Office", "Livingroom", "Livingroom", "Bedroom"]
+    ], 
+    "2": [
+        ["Office", "Bedroom", "Office", "Office", "Kitchen", "Porch", "Livingroom", "Livingroom"], 
+        ["Office", "Livingroom", "Livingroom", "Office", "Kitchen", "Porch", "Livingroom", "Bedroom"], 
+        ["Office", "Livingroom", "Livingroom", "Livingroom", "Kitchen", "Porch", "Office", "Bedroom"]
+    ], 
+    "4": [
+        ["Livingroom", "Office", "Livingroom", "Bedroom", "Kitchen", "Livingroom", "Livingroom"], 
+        ["Livingroom", "Livingroom", "Office", "Livingroom", "Bedroom", "Kitchen", "Livingroom"], 
+        ["Livingroom", "Livingroom", "Bedroom", "Kitchen", "Livingroom", "Office", "Livingroom"]
+    ], 
+    "5": [
+        ["Livingroom", "Bedroom", "Office", "Livingroom", "Kitchen", "Livingroom"], 
+        ["Livingroom", "Kitchen", "Livingroom", "Livingroom", "Office", "Bedroom"], 
+        ["Livingroom", "Office", "Livingroom", "Livingroom", "Bedroom", "Kitchen"]
+    ] 
+}

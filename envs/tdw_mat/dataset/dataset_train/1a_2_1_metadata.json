@@ -1,0 +1,121 @@
+{
+    "floorplan_scene_name": "1a",
+    "floorplan_layout": 2,
+    "scene_id": 1,
+    "object_room_list": [
+        [
+            "small_purse",
+            "Livingroom"
+        ],
+        [
+            "b03_burger",
+            "Kitchen"
+        ],
+        [
+            "mouse_02_vray",
+            "Office"
+        ],
+        [
+            "b05_calculator",
+            "Office"
+        ],
+        [
+            "small_purse",
+            "Livingroom"
+        ],
+        [
+            "b05_calculator",
+            "Office"
+        ],
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "b04_lighter",
+            "Livingroom"
+        ],
+        [
+            "b05_calculator",
+            "Office"
+        ],
+        [
+            "small_purse",
+            "Livingroom"
+        ],
+        [
+            "b03_burger",
+            "Kitchen"
+        ],
+        [
+            "b03_burger",
+            "Kitchen"
+        ],
+        [
+            "bread",
+            "Kitchen"
+        ],
+        [
+            "b03_burger",
+            "Livingroom"
+        ],
+        [
+            "bread",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_wood_mesh",
+            "Livingroom"
+        ],
+        [
+            "b04_bowl_smooth",
+            "Kitchen"
+        ],
+        [
+            "b04_banana",
+            "Livingroom"
+        ],
+        [
+            "b04_banana",
+            "Kitchen"
+        ],
+        [
+            "mouse_02_vray",
+            "Livingroom"
+        ],
+        [
+            "f10_apple_iphone_4",
+            "Livingroom"
+        ],
+        [
+            "b04_banana",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_wood_mesh",
+            "Livingroom"
+        ],
+        [
+            "b04_bowl_smooth",
+            "Kitchen"
+        ]
+    ],
+    "food": {
+        "target": 10,
+        "container": 2
+    },
+    "stuff": {
+        "target": 10,
+        "container": 2
+    },
+    "0": {
+        "x": -7.084211349487305,
+        "y": 0,
+        "z": 2.912838935852051
+    },
+    "1": {
+        "x": -1.0842113494873047,
+        "y": 0,
+        "z": 3.912838935852051
+    }
+}

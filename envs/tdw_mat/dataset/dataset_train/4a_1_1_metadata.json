@@ -1,0 +1,117 @@
+{
+    "floorplan_scene_name": "4a",
+    "floorplan_layout": 1,
+    "scene_id": 1,
+    "object_room_list": [
+        [
+            "small_purse",
+            "Livingroom"
+        ],
+        [
+            "small_purse",
+            "Livingroom"
+        ],
+        [
+            "b04_banana",
+            "Livingroom"
+        ],
+        [
+            "b04_banana",
+            "Livingroom"
+        ],
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "b05_executive_pen",
+            "Office"
+        ],
+        [
+            "mouse_02_vray",
+            "Office"
+        ],
+        [
+            "mouse_02_vray",
+            "Office"
+        ],
+        [
+            "b04_lighter",
+            "Livingroom"
+        ],
+        [
+            "b04_lighter",
+            "Livingroom"
+        ],
+        [
+            "b05_calculator",
+            "Office"
+        ],
+        [
+            "b04_orange_00",
+            "Kitchen"
+        ],
+        [
+            "b05_calculator",
+            "Office"
+        ],
+        [
+            "b05_executive_pen",
+            "Office"
+        ],
+        [
+            "b03_loafbread",
+            "Livingroom"
+        ],
+        [
+            "b03_loafbread",
+            "Livingroom"
+        ],
+        [
+            "apple",
+            "Livingroom"
+        ],
+        [
+            "b03_loafbread",
+            "Livingroom"
+        ],
+        [
+            "b03_loafbread",
+            "Livingroom"
+        ],
+        [
+            "basket_18inx18inx12iin_plastic_lattice",
+            "Office"
+        ],
+        [
+            "b04_bowl_smooth",
+            "Kitchen"
+        ],
+        [
+            "plate06",
+            "Kitchen"
+        ]
+    ],
+    "food": {
+        "target": 10,
+        "container": 2
+    },
+    "stuff": {
+        "target": 10,
+        "container": 1
+    },
+    "0": {
+        "x": 4.238441467285156,
+        "y": 0,
+        "z": 0.29559898376464844
+    },
+    "1": {
+        "x": -4.261558532714844,
+        "y": 0,
+        "z": 4.295598983764648
+    }
+}

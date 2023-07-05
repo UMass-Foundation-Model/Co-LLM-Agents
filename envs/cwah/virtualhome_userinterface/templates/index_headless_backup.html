@@ -1,0 +1,847 @@
+<head>
+	<!-- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+<!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"> -->
+<!-- <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"> -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css" rel="stylesheet">
+
+<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+
+<!-- <script src="https://code.jquery.com/jquery-3.3./1.slim.min.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+$.ajaxSetup({
+  contentType: "application/json; charset=utf-8"
+});
+// setup some JSON to use
+var is_walking = null; 
+var curr_activity_id = -1;
+var activity_count = 0;
+var show_modal = "{{ show_modal }}" == "True";
+
+window.onload = function() {
+    document.onkeydown = function(e) {
+    switch(e.which) {
+        case 37: // left
+	    doWork("turnleft");
+	    break;
+
+        case 38: // up
+	    doWork("walkforward");
+	    break;
+
+        case 39: // right
+	    doWork("turnright");
+	    break;
+	
+	case 82:
+	    refreshScene();
+
+	case 72:
+	    increaseResolution();
+
+        default: return; // exit this handler for other keys
+    }
+
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+    };
+    
+    refreshScene(true);
+}
+
+function endActivity(){
+    var str_end = "<h3> Thanks so much for your help in completing the task. All done:)  </h5>";
+    $('#top_buttons').empty();
+    $('#centralpannel').empty();
+    $('#centralpannel').append(str_end);
+}
+
+function querymask(object_id){
+	var content = {'obj_id': object_id};
+	var content = JSON.stringify(content);
+
+	$.ajax({
+	    type: "POST",
+	    url: "querymaskid",
+	    data: content,
+	    success: function(result){
+		result = JSON.parse(result);
+		$("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    },
+	    async:true});
+}
+
+
+function getbuttons(result){
+    var object_name = result[0][0]
+    $('#currentactions').empty();
+    $('#selectedcontainer').show();
+    var object_name_str = object_name[1] + '.' + object_name[2];
+    $('#selectedobject').text(object_name_str)
+    for (var i = 0; i < result[0][1].length; i++){
+	    var room_info = '[[\"'+object_name[1]+'\", ' + object_name[0] +']]';
+	    var action_name = result[0][1][i];
+	    var button_room = "<button class='btn btn-primary' onclick='doWork(\""+action_name+"\", "+room_info+")'>"+action_name+"</button>";
+	    $('#currentactions').append(button_room);
+	
+    }
+    
+}
+
+function decode(encoded) {
+  let uncompressed = [];
+
+  /**
+   * Create a new array with decoded data
+   */
+  encoded.map((element, ind) => {
+    if (ind % 2 === 0) {
+      uncompressed.push(...Array(element).fill(encoded[ind + 1]));
+    }
+  });
+
+  return uncompressed;
+}
+
+var is_visible_instr = false;
+function tickvisible(){
+
+	if (!is_visible_instr){
+		$("#visibleinstrbutton").text("Ok");
+		$("#visible_object_info").show()
+		is_visible_instr = true;
+	}
+	
+	else {
+		is_visible_instr = false;
+		$("#visibleinstrbutton").text("About");
+		$("#visible_object_info").hide()
+	}
+}
+
+
+
+function refreshScene(include_top=false){
+    content_json = {'instruction': 'refresh'}
+    content_json['include_top'] = include_top;
+    console.log(content_json)
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "receiver",
+	data: content,
+	success: function(result){
+	    console.log(include_top);
+	    endTime1 = new Date();
+	    result = JSON.parse(result);
+	   if (result['resp']['all_done']){
+		endActivity();
+		return;
+	   }
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    if (include_top){
+		    $("#imagetop").attr("src", "data:image/jpg;base64," + result['resp']['image_top'])
+	    }
+	    //$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+	    // console.log(result['plot_top']);
+	    // console.log(result['plot_top'])
+
+	    $("#plot_top").append(result['plot_top']);
+	   	addRoomButtons(result['resp']['rooms'])
+	    
+
+	    $('#loc_agent').text(result['resp']['other_info']['current_room'])
+	    grabbed_obj = result['resp']['other_info']['grabbed_object'];
+	    if (grabbed_obj.length > 0){
+			var grabb_obj_str = grabbed_obj[0] + "." + str(grabbed_obj[2]);
+			$('#grab_agent').text(grabb_obj_str);
+	    }
+	    else {
+	    	$('#grab_agent').text("Nothing");
+	    }
+
+
+	    grabbed_obj_second = result['resp']['other_info']['grabbed_object_second'];
+	    if (grabbed_obj_second == -1){
+		$("#second_agent_info").hide();
+	    }
+	    else {
+		$("#second_agent_info").show();
+		if (grabbed_obj_second.length > 0){
+			var grabb_obj_str = grabbed_obj_second[0] + "." + str(grabbed_obj_second[2]);
+			$('#grab_agent_2').text(grabb_obj_str);
+		}
+		else {
+			$('#grab_agent_2').text("Nothing");
+		}
+	    }
+
+
+	    // addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'])
+
+	    if (result['exp_name'] != 'debug'){
+	    	$("#next_task").hide()
+	    	$("#resetbutton").hide()
+	    	$("#scene_id").hide()
+	    }
+	    refreshInfo(result);
+
+	},
+	async:true});
+
+}
+
+function refreshInfo(result){
+	$('#loc_agent').text(result['resp']['other_info']['current_room'])
+	var object_id_target = result['resp']['other_info']['goal_id'];
+
+	    grabbed_obj = result['resp']['other_info']['grabbed_object'];
+	    if (grabbed_obj.length > 0){
+			var grabb_obj_str = grabbed_obj[0] + "." + grabbed_obj[2];
+			$('#grab_agent').text(grabb_obj_str);
+	    }
+	    else {
+	    	$('#grab_agent').text("Nothing");
+	    }
+
+
+	    grabbed_obj_second = result['resp']['other_info']['grabbed_object_second'];
+	    if (grabbed_obj_second == -1){
+		$("#second_agent_info").hide();
+	    }
+	    else {
+		$("#second_agent_info").show();
+		if (grabbed_obj_second.length > 0){
+			var grabb_obj_str = grabbed_obj_second[0] + "." + grabbed_obj_second[2];
+			$('#grab_agent_2').text(grabb_obj_str);
+		}
+		else {
+			$('#grab_agent_2').text("Nothing");
+		}
+	    }
+    console.log(grabbed_obj);
+    console.log(grabbed_obj_second);
+    $("#task_name").text(result['resp']['other_info']['task_name'])
+    $("#num_steps").text(result['resp']['other_info']['step_str'])
+    $("#num_task").text(result['resp']['other_info']['task_id_str'])
+    var task_id_str = result['resp']['other_info']['task_id_str'];
+    curr_activity_id = parseInt(task_id_str.split('/')[0]);
+    activity_count = parseInt(task_id_str.split('/')[1]);
+  	$("#num_completed_all").text(result['resp']['other_info']['total_completed_str'])
+    $("#task_finished").text(Boolean(Number(result['resp']['other_info']['task_finished'])))
+
+  	var task_finished =  result['resp']['other_info']['task_finished'] == '1';
+  	if (show_modal){
+  		$('#nextTask').hide();
+  	}
+  	if (task_finished){
+    	$("#refreshbutton").hide()
+        $("#increaseResButton").hide()
+        $("#recordbutton").hide()
+        $("#visible_objects_all").hide()
+        $("#button_rooms").hide()
+  		$('#nextTask').prop('disabled', false);
+  		if (show_modal){
+
+  			showmodalNextTask();
+  		}
+  	}
+  	else{
+  		$('#nextTask').prop('disabled', true);
+    	$("#refreshbutton").show()
+        $("#increaseResButton").show()
+        $("#recordbutton").show()
+        $("#visible_objects_all").show()
+        $("#button_rooms").show()
+    }
+
+    $('#task_pred').empty()
+    for (var i = 0; i < result['resp']['other_info']['task_preds'].length; i++){
+    	var task_pred = result['resp']['other_info']['task_preds'][i];
+    	var task_elem = '<li>' + task_pred + '</li>'
+    	$('#task_pred').append(task_elem)
+    }
+    addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'], result['resp']['other_info']['goal_id'])
+
+    {#if (result['resp']['other_info']['task_id_finished'] == 'True'){#}
+    {#	#}
+    {##}
+
+}
+
+function addVisibleButtons(visible_objects, results, object_id_target=null){
+	// console.log(results)
+    $('#visible_objects_grab').empty();
+    $('#visible_objects_container').empty();
+    
+    var count_grab = 0;
+    var count_cont = 0;
+    var container_div_dict = {};
+    var to_add = [];
+    for (var i = 0; i < visible_objects.length; i++){
+		var room_info = '[[\"'+visible_objects[i][0]+'\", ' + visible_objects[i][1] +']]';
+	    var object_name = visible_objects[i][1] + '.' + visible_objects[i][2]
+	    var is_close = visible_objects[i][4] == '1';
+	    var is_open = visible_objects[i][5] == '1';
+	    
+	    var button_room;
+	    
+	    var object_name_styled = object_name;
+	    console.log(visible_objects[i], object_id_target);
+	    if (visible_objects[i][0] == object_id_target){
+	    	object_name_styled = "<span class='fas fa-map-marker-alt' style='font-size: medium; margin-right: 5px' ></span><span style='font-size: medium'>" + object_name_styled + "</span>";
+	    }
+	    if (!is_close){
+	    	button_room = "<button class='btn btn-primary'>"+object_name_styled+"</button>";	
+	    }
+	    else {
+	    	button_room = "<button class='btn btn-success'>"+object_name_styled+"</button>";
+	    }
+
+	    button_room = $(button_room);
+	    console.log(results[i])
+	    button_room.click([results[i]], function (e){
+	    	// console.log(e.data);
+		    querymask(e.data[0][0][0]);
+		    getbuttons(e.data);
+		});
+
+
+		var is_grabbable = visible_objects[i][3] == 'grab';
+		var new_line = false;
+		if (i > 0 && visible_objects[i][1] != visible_objects[i-1][1]){
+			new_line = true;
+		}
+
+		if (is_grabbable){
+
+			// if (new_line && count_grab > 0){
+			// 	$('#visible_objects_grab').append('<br>');	
+			// }
+			if (visible_objects[i][6] == -1){
+				$('#visible_objects_grab').append(button_room);	
+			}
+			else {
+				// console.log(visible_objects[i][6]);
+				// console.log(button_room);
+				// console.log('add')
+				// console.log(visible_objects[i][6])
+				to_add.push([button_room, visible_objects[i][6]]);
+			} 
+
+			
+
+			count_grab += 1
+
+		}
+		else {
+
+			var container = $("<div style='display: inline-block; margin: 4px'></div>");
+			var style_box = "";
+			// console.log(results[i][1]);
+			console.log(results[i][0][6]) 
+			if (results[i][0][3] == "container"){
+			
+				if (is_open){
+					style_box = " openbox";
+				}
+				else {
+					style_box = " closedbox";
+				}
+
+			}
+			
+			container.append(button_room);
+			container_width = '180';
+			if (visible_objects[i][1] == "kitchentable" || visible_objects[i][1] == "coffeetable"){
+			    container_width = '367';
+			}
+			var div_container = $("<div id='box_"+visible_objects[i][0]+"' class='buttoncontainer"+style_box+"' style='height: 150px; width: "+container_width+"px'></div>");
+			
+			container_div_dict[visible_objects[i][0]] = div_container;
+			container.append(div_container)
+
+
+			if (count_cont > 0 && count_cont% 4 == 0){
+				$('#visible_objects_container').append('<br>');	
+			}
+			$('#visible_objects_container').append(container);
+			if (container_width == '180'){
+			    count_cont += 1
+			}
+			else {
+			    count_cont += 2
+			}
+			
+		}
+    }
+    console.log(container_div_dict);
+
+
+    for (var i = 0; i < to_add.length; i++){
+    	var curr_id = to_add[i][1];
+    	console.log(curr_id);
+    	console.log(container_div_dict[curr_id])
+    	container_div_dict[curr_id].append(to_add[i][0])
+    }
+}
+
+function recordGraph(){
+    scene_id = $('#scene_id').val()
+    console.log('scene_id: ', scene_id);
+    content_json = {'instruction': 'reset', 'scene_id': scene_id}
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "record_graph_flag",
+	data: content,
+	success: function(result){
+		if (result['record_graph_flag']){
+			$("#recordbutton").text("Stop Record")
+		}
+		else {
+			$("#recordbutton").text("Record")	
+		}
+		refreshScene();
+	},
+	async:false});
+}
+
+function addRoomButtons(rooms){
+    $('#button_rooms').empty();
+    for (var i = 0; i < rooms.length; i++){
+	var room_info = '[[\"'+rooms[i][0]+'\", ' + rooms[i][1] +']]';
+	var button_room = "<button class='btn btn-primary' onclick='doWork(\"walktowards\", "+room_info+")'>"+rooms[i][0]+"</button>";
+	$('#button_rooms').append(button_room);
+
+    }
+}
+
+function resetScene(){
+    scene_id = $('#scene_id').val()
+    console.log(scene_id);
+    content_json = {'instruction': 'reset', 'scene_id': scene_id}
+    var content = JSON.stringify(content_json);
+    $.ajax({
+	type: "POST",
+	url: "receiver",
+	data: content,
+	success: function(result){
+	    result = JSON.parse(result);
+	   if (result['resp']['all_done']){
+		endActivity();
+		return;
+	   }
+	    endTime1 = new Date();
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    $("#imagetop").attr("src", "data:image/jpg;base64," + result['resp']['image_top'])
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	},
+	async:false});
+
+}
+
+function showmodalNextTask(){
+	$('.modal').modal('show');
+	if (curr_activity_id == activity_count){
+		$('#titleform').text("Great job! This was the last task")
+		$('#nexttaskbutton').text("Finish");
+	}
+}
+
+function modalNextTask(){
+
+	var data = $('#modalform_id').serialize();
+	var data_json = JSON.parse(JSON.stringify($('#modalform_id').serializeArray()));
+	
+	if (data_json.length < 3){
+		alert("Please complete the form to continue");
+	}
+	else {
+		$('.modal').modal('hide');
+		nextTask(data_json);
+	}
+	
+}
+function nextTask(data_modal=null){
+    scene_id = -1;
+    content_json = {'instruction': 'reset', 'scene_id': scene_id}
+    if (data_modal != null){
+    	content_json['data_form'] = data_modal;
+    }
+    var content = JSON.stringify(content_json);
+    $('#wait_spinner').show();
+    $.ajax({
+	type: "POST",
+	url: "receiver",
+	data: content,
+	success: function(result){
+	    endTime1 = new Date();
+	    result = JSON.parse(result);
+	   if (result['resp']['all_done']){
+		endActivity();
+		return;
+	   }
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    $("#imagetop").attr("src", "data:image/jpg;base64," + result['resp']['image_top'])
+	    $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+
+        refreshInfo(result);
+
+       	addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'], result['resp']['other_info']['goal_id'])
+
+       	$('#wait_spinner').hide();
+	refreshScene();
+
+	},
+	async:true});
+
+}
+
+function doWork(content_str, other_info=null) {
+	// ajax the JSON to the server
+	content_json = {'instruction': content_str, 'other_info': other_info}
+	if (content_str == 'walktowards' && other_info != null){
+	    is_walking = other_info;
+	
+	}
+	else {
+	    is_walking = null;
+	}
+	var content = JSON.stringify(content_json);
+	startTime = new Date();
+	$.post("receiver", content, function(result){
+	    result = JSON.parse(result);
+	   if (result['resp']['all_done']){
+		endActivity();
+		return;
+	   }
+
+	    $('#currentactions').empty();
+	    $('#selectedobject').text('');
+	    $('#selectedcontainer').hide();
+	    endTime = new Date();
+	    endTime1 = new Date();
+	    $('#loc_agent').text(result['resp']['other_info']['current_room'])
+	    $("#image").attr("src", "data:image/jpg;base64," + result['img'])
+	    // $("#image2").attr("src", "data:image/jpg;base64," + result['img2'])
+	    //$("#image").attr("src", "{{ url_for('static', filename='curr_im.png') }}?"+endTime1.getTime())
+	    endTime2 = new Date();
+	    //$("#image2").attr("src", "data:image/png;base64," + result['img2'])
+	    timeDiff = endTime - startTime;
+	    timeDiff /= 1000;
+	    //console.log((endTime - startTime)/1000)
+	    //console.log((endTime1 - startTime)/1000)
+	    //console.log((endTime2 - startTime)/1000)
+        {#console.log('result: ', result)#}
+
+        $("#plot_top").empty();
+        // $("#plot_top").append(result['plot_top']);
+
+
+        refreshInfo(result);
+
+	    if (is_walking != null)
+	    {
+            if (result['resp']['other_info']['close_objects'].includes(is_walking[0][1]) ||
+                result['resp']['other_info']['inside_objects'].includes(is_walking[0][1])
+            )
+            {
+                
+                addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'], result['resp']['other_info']['goal_id'])
+                if (result['resp']['other_info']['close_objects'].includes(is_walking[0][1])){
+                	querymask(is_walking[0][1]);
+		    		// TODO: select here
+		    		for (var it = 0; it < result['resp']['object_action'].length; it++){
+		    			console.log(result['resp']['object_action'][it][0][0])
+		    			if (is_walking[0][1] == result['resp']['object_action'][it][0][0]){
+		    				getbuttons([result['resp']['object_action'][it]]);
+
+		    			}
+		    			
+		    		} 
+		    		
+                }
+                is_walking = null;
+            }
+            else
+            {
+                doWork(content_str, other_info);
+            }
+	    }
+	    else
+        {
+		    addVisibleButtons(result['resp']['other_info']['visible_objects'], result['resp']['object_action'], result['resp']['other_info']['goal_id'])
+	    }
+	});
+	// stop link reloading the page
+}
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles2.css') }}">
+</head>
+<body>
+    <div class="topbuttons">
+	<h1>VirtualHome Online Simulator</h1>
+    </div>
+    <br>
+    <div class="topbuttons">
+	<p>
+	<ul>
+	    <li> Use the keys (front, left, right) to move around the scene</li>
+	    <li> As you move, new buttons will appear to interact with objects</li>
+	    
+	</ul>
+	</p>
+    </div>
+<br>
+<div id="modal_question" class="modal bd-example-modal-lg"  data-keyboard="false" data-backdrop="static" tabindex="0" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="titleform">Good Job! This task is completed. </h5>
+
+      </div>
+      <div class="modal-body">
+      	<p>We want to evaluate your experience in this task. For every question, rate how satisfied you are with the agent tasked with helping you. Use <strong>1</strong> if you are completely dissatisfied, <strong>4</strong> if you feel neutral about it and <strong>7</strong> if you are very satisfied. </p>
+      	<br>
+
+      	<form id="modalform_id">
+      	<h6> Knowledge of the Goal </h6>
+        <p> Do you feel the helper knew what was the goal of the task? </p>
+	<p> <b> 1.</b> The helper did not know anything about the goal, <b>4</b>. The helper knew part of the goal, but not everything. <b>7</b>. The helper perfectly knew the goal of the task  </p>
+      	<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio1" value="option1">
+		  <label class="form-check-label" for="inlineRadio1">1</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio2" value="option2">
+		  <label class="form-check-label" for="inlineRadio2">2</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio3" value="option3">
+		  <label class="form-check-label" for="inlineRadio3">3 </label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio2" value="option4">
+		  <label class="form-check-label" for="inlineRadio2">4</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio2" value="option5">
+		  <label class="form-check-label" for="inlineRadio2">5</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio2" value="option6">
+		  <label class="form-check-label" for="inlineRadio2">6</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="knowledge_goal" id="inlineRadio2" value="option7">
+		  <label class="form-check-label" for="inlineRadio2">7</label>
+		</div>
+
+
+
+	<br>
+	<br>
+      <h6> Helpfulness </h6>
+        <p> How helpful was the helping agent? Did it help achieve the task faster?<p> 
+	<p> <b>1.</b> The helper made the task more difficult for me. <b>4</b>. The help was not helpful nor hurtful. <b>7</b>. The helper was really helpful in achieving the task. </p>
+
+      	<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio1" value="option1">
+		  <label class="form-check-label" for="inlineRadio1">1</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio2" value="option2">
+		  <label class="form-check-label" for="inlineRadio2">2</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio3" value="option3">
+		  <label class="form-check-label" for="inlineRadio3">3 </label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio2" value="option4">
+		  <label class="form-check-label" for="inlineRadio2">4</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio2" value="option5">
+		  <label class="form-check-label" for="inlineRadio2">5</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio2" value="option6">
+		  <label class="form-check-label" for="inlineRadio2">6</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="helpfulness_goal" id="inlineRadio2" value="option7">
+		  <label class="form-check-label" for="inlineRadio2">7</label>
+		</div>
+
+
+
+	<br>
+	<br>
+      <h6> Trust </h6>
+        <p> How much do you trust the helping agent? Would you feel safe doing the task with it, or you rather do the task alone </p>
+        <p> 1. I did not trust the helper at all, I would prefer to do the task alone. 4. I feel neutral about how much I trust the helper. 7. I fully trusted the helper, and feel confident doing the task with it. </p>
+      	<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio1" value="option1">
+		  <label class="form-check-label" for="inlineRadio1">1</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio2" value="option2">
+		  <label class="form-check-label" for="inlineRadio2">2</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio3" value="option3">
+		  <label class="form-check-label" for="inlineRadio3">3 </label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio2" value="option4">
+		  <label class="form-check-label" for="inlineRadio2">4</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio2" value="option5">
+		  <label class="form-check-label" for="inlineRadio2">5</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio2" value="option6">
+		  <label class="form-check-label" for="inlineRadio2">6</label>
+		</div>
+		<div class="form-check form-check-inline">
+		  <input class="form-check-input" type="radio" name="trust_goal" id="inlineRadio2" value="option7">
+		  <label class="form-check-label" for="inlineRadio2">7</label>
+		</div>
+	</form>
+      </div>
+
+      <!-- </div> -->
+
+
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="modalNextTask()"> Next Task </button>
+        <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+<div id="canvas" style="";>
+    <div id="top_buttons" class="topbuttons">
+	<select name="Scene" id="scene_id">
+	      <option value="0"> Scene 0 </option>
+	      <option value="1"> Scene 1 </option>
+	      <option value="2"> Scene 2 </option>
+	      <option value="3"> Scene 3 </option>
+	      <option value="4"> Scene 4 </option>
+	      <option value="5"> Scene 5 </option>
+	      <option value="6"> Scene 6 </option>
+	</select>
+	<div id="wait_spinner" style="display: none">
+		Loading...
+		<div class="spinner-border" role="status">
+  		<span class="sr-only">Loading...</span>
+		</div>
+	</div>
+	<button disabled class="btn btn-primary" id="nextTask" onclick=nextTask()> Next Task </button>
+	<button class="btn btn-primary" id="resetbutton" onclick=resetScene()> Reset </button>
+	<button class="btn btn-primary" id="refreshbutton" onclick=refreshScene()> Refresh </button>
+	<!-- <button class="btn btn-primary" id="increaseResButton" onclick=increaseResolution()> View High Res </button> -->
+    <!-- <button class="btn btn-primary" id="recordbutton" onclick=recordGraph()> Stop Recording </button> -->
+    </div>
+    <br>
+    <div style="width: 100%; height: 700px">
+	<div style="display: inline-block; width: 25%; vertical-align: top; margin: 10px">
+		<div style="width: 80%; margin: auto; height: 50%; vertical-align: top; margin-bottom: 10px">
+			<h3 style="width: 100px; display: inline-block;"> Activity  </h3>
+			<span style="width: 15%; display: inline-block; font-size: x-large" id="num_task"> 1/1  </span>
+
+			<h3 style="width: 100px; display: inline-block;"> #Steps  </h3>
+			<span style="width: 10%; display: inline-block; font-size: x-large" id="num_steps"> 0/250  </span>
+
+		    <div class="buttoncontainer statuscontainer" style="height: 80%">
+				<span> Activity name: </span>
+				<span id="task_name">  </span>
+				<br>
+				<span> Tasks:  </span>
+				<ul style="height: 60%" id="task_pred">  
+
+				</ul>
+				<span> Tasks Completed:  </span>
+				<span id="num_completed_all"> 0/0   </span>
+				<span id="task_finished"> False  </span>
+
+		    </div>
+		</div>
+
+			<span style=""> Walk to </span>
+				<div class="topbuttons">
+			<div id="button_rooms"> </div>
+	    </div>
+	    <div id="selectedcontainer" style="display: none; margin: 5%">
+			<h3 id="selectedobject"></h3>
+				<div id="currentactions" class="buttoncontainer" style="height: 100px">
+				</div>
+	    </div>
+
+	</div>
+	<div id="centralpannel" style="display: inline-block; width: 45%; vertical-align: top">
+	    
+
+
+	   	
+			<!-- <br> -->
+			<!-- <br> -->
+			<div style="display: inline-block; width: 100%; vertical-align: top">
+
+	    
+	    <h3 style="display: inline-block;"> Visible Objects </h3>
+		<button style="display: inline-block;" type="button" class="btn btn-link" id="visibleinstrbutton" onclick="tickvisible()"> About </button>
+
+		<div id="visible_object_info" style="margin-bottom: 10px; display: none">
+
+		Objects are visible when they are in the same room as the agent, unless they are inside some closed container (e.g. an apple inside a fridge). When the objects are close to the agent, the button turns <span style="font-weight: bold; color: green">green</span>.
+		</div>
+		<div id="visible_objects_all"  style="height: 100%">
+			<span style="font-weight: bold"> Other locations inside room </span>
+			<div id="visible_objects_grab" class="buttoncontainer" style="height: 10%">
+			</div>
+			<br>
+			<span style="font-weight: bold"> Containers/Surfaces </span>
+			<div id="visible_objects_container" class="buttoncontainer" style="height: 75%">
+			</div>
+		</div>
+
+
+	</div>
+	</div>
+	<div style="display: inline-block; height; width: 25%; vertical-align: top">
+		<div style="width: 80%; margin: auto">
+				<img style="width: 100%" id="image" margin="5%" src=""></img>
+			<!-- <div id="plot_top"></div> -->
+	    </div>
+		<div style="width: 80%; margin: auto; height: 30%; vertical-align: top; margin-bottom: 10px">
+			<h3> Agent  </h3>
+		    <div class="buttoncontainer statuscontainer">
+			<span> Location: </span>
+			<span id="loc_agent">  </span>
+			<br>
+			<span> Grabbed Object: </span>
+			<span style="font-weight: bold" id="grab_agent">  </span>
+			<div id="second_agent_info">
+			    <br>
+			    <span> Agent 2 Grabbed Object: </span>
+			    <span style="font-weight: bold" id="grab_agent_2">  </span>
+			</div>
+		    </div>
+		</div>
+	</div>
+    </div>
+</div>
+<div>
+</div>
+</body>
