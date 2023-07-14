@@ -56,11 +56,11 @@ To view the interface for human experiments, run the following command, and acce
 
 ```bash
 cd virtualhome_userinterface
-python vh_demo.py --deployment remote --execname ../../executable/linux_exec.v2.3.0.x86_64 --extra_agent MCTS --task_group 0 --showmodal
+python vh_demo.py --deployment remote --executable_file ../../executable/linux_exec.v2.3.0.x86_64 --extra_agent MCTS_comm --task_group 0 --showmodal
 ```
 
 <!-- --task_group is recommended to be chosen in 0, 5, 10, 16, 20, 26, 30, 32, 40, 49. **Only one number should be chosen though --task_group is nargs**.
 
---extra_agent_MCTS choices = ["MCTS", "LLM", "none"], default='none', meaning working with MCTS agent, working with LLM agent, or working alone.
+--extra_agent choices = ["MCTS_comm", "LLM_comm", "LLM", "none"], default='none', meaning working with MCTS agent, working with LLM agent that can communicate, working with LLM agent that cannot communicate, or working alone.
 
 --showmodal is used to let the questionnaire appear after you have completed the task. -->
