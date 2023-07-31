@@ -15,7 +15,7 @@ Download the simulator, and put it in an `executable` folder, one folder above t
 - [Download](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing) Linux x86-64 version.
 
 
-**[IMPORTANT]** Please use our modified version of the VirtualHome repo (wah branch in the VirtualHome repo) and the v2.3.0 version of the executable.
+**[IMPORTANT]** Please use our modified version of the VirtualHome API repo (wah branch in the VirtualHome repo) and the provided version of the executable.
 
 The files should be organized as follows:
 
