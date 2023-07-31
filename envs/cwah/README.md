@@ -12,7 +12,7 @@ git clone --branch wah https://github.com/xavierpuigf/virtualhome.git
 Download the simulator, and put it in an `executable` folder, one folder above this repository
 
 
-- [Download](http://virtual-home.org/release/simulator/v2.0/v2.3.0/linux_exec.zip) Linux x86-64 version.
+- [Download](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing) Linux x86-64 version.
 
 
 **[IMPORTANT]** Please use our modified version of the VirtualHome repo (wah branch in the VirtualHome repo) and the v2.3.0 version of the executable.
