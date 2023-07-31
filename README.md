@@ -12,17 +12,17 @@ Project Website: [Co-LLM-Agents](https://vis-www.cs.umass.edu/Co-LLM-Agents/)
 
 ## News
 
-**[8/1/2023]**: we found that there are some missing files in Virtual Home's executable zip, we update a new one [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you meet `XDG_RUNTIME_DIR not set in the environment` error, please download it.
+**[8/1/2023]**: We update the VirtualHome Simulator executable we used [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you met `XDG_RUNTIME_DIR not set in the environment` error previously, please check if you are using the new version we provided.
 
 ## Installation
 
-For detailed instructions on the installation of the two embodied multi-agent environments `Communicative Watch-And-Help` and `ThreeDWorld Multi-Agent Transport`, please refer to the Setup sections in `envs/cwah/README.md` and `envs/tdw_mat/README.md`, respectively.
+For detailed instructions on the installation of the two embodied multi-agent environments `Communicative Watch-And-Help` and `ThreeDWorld Multi-Agent Transport`, please refer to the Setup sections in `envs/cwah/README.md` and `envs/tdw_mat/README.md` respectively.
 
 ### A simple start guide for `Communicative Watch-And-Help`:
 
 **Step 1**: Get the VirtualHome Simulator and API
 
-Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repository in envs dictionary:
+Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repository under `envs`:
 
 ```bash
 cd envs
@@ -66,17 +66,21 @@ python demo/demo_scene.py
 
 ## Run Experiments
 
-The main implementation code of our Cooperative LLM Agents is in `envs/*/LLM` and `envs/*/lm_agent.py`. The scripts for running the agents are in `envs/*/scripts` folder, you can try to run them on your own.
+The main implementation code of our Cooperative LLM Agents is in `envs/*/LLM` and `envs/*/lm_agent.py`.
 
-When running the scripts, be sure that you are in the parent folder of `scripts` (i.e., `envs/tdw_mat` or `envs/cwah`).
+We also prepare example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `envs/*/scripts`.
 
-## Results
+For example, to run experiments with two LLM Agents on Communicative Watch-And-Help, run the following command in folder `envs/cwah`.
 
-Our experiment shows that llm agents can achieve comparable performance regard to human-designed hierarchical planning agents (hp agents):
+```
+./scripts/symbolic_obs_llm_llm.sh
+```
 
-![quantitative_results](assets/quantitative_results.png)
+## Interesting Cases
 
-Besides, we found many interesting behavoirs of llm agents in the multi-agent settings:
+We noticed many interesting agents' behaviors exhibited in our experiments and identified several cooperative behaviors.
+
+There are more interesting cases and demos on our [website](https://vis-www.cs.umass.edu/Co-LLM-Agents/)!
 
 ![qualitative_results](assets/qualitative_results.png)
 
