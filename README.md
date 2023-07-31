@@ -12,7 +12,7 @@ Project Website: [Co-LLM-Agents](https://vis-www.cs.umass.edu/Co-LLM-Agents/)
 
 ## News
 
-**[8/1/2023]**: we found that there are some missing files in Virtual Home's executable zip, we update a new one at [Simulator](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing), please download it before running `Communicative Watch-And-Help`.
+**[8/1/2023]**: we found that there are some missing files in Virtual Home's executable zip, we update a new one [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you meet `XDG_RUNTIME_DIR not set in the environment`, please download it.
 
 ## Installation
 
