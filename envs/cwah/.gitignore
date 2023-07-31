@@ -16,8 +16,7 @@ __pycache__/
 .idea
 .vscode
 
-dataset/*
-!dataset/test_env_set_help.pik
+dataset/test_env_set_help.pik
 checkpoints/*
 test_results/*
 logdir/*

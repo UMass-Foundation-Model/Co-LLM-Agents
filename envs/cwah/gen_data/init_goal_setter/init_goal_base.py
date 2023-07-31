@@ -120,17 +120,6 @@ class SetInitialGoal:
                 if 2 <= count <= 6 and self.task_name not in ['clean_table', 'unload_dishwasher'] or 3 <= count <= 6:
                     break
 
-    def get_obj_room(self, obj_id):
-        room_ids = [node['id'] for node in graph['nodes'] if node['category'] == 'Rooms']
-        room_info = [edge['to_id'] for edge in graph['edges'] if
-                     edge['to_id'] in room_ids and edge['relation_type'] == 'INSIDE' and edge['from_id'] == obj_id]
-        assert len(room_info) == 1
-
-        objs_in_room = [edge['from_id'] for edge in graph['edges'] if
-                        edge['to_id'] == room_info[0] and edge['relation_type'] == 'INSIDE']
-
-        return objs_in_room
-
     def check_graph(self, graph, apartment, original_graph):
         current_objects = {node['id']: node['class_name'] for node in graph['nodes']}
         current_object_ids = list(current_objects.keys())
@@ -434,66 +423,3 @@ class SetInitialGoal:
         node[0]['states'] = ['OFF']
         # + [state for state in node[0]['states'] if state not in ['ON', 'OFF']]
         return graph
-
-
-
-def debug_function(comm):
-    with open('data/object_info.json', 'r') as file:
-        obj_position = json.load(file)
-
-    success_edges = []
-    fail_target_nodes = []
-
-    for obj_name in obj_position['objects_grab']:
-        object_id = 2000
-        new_node = {'id': object_id, 'class_name': obj_name, 'properties': ['GRABBABLE'], 'states': [],
-                    'category': 'added_object'}
-        nodes = [new_node]
-
-        for target_name in obj_position['objects_inside']:
-            s, graph = comm.environment_graph()
-
-            target_node = [node for node in graph['nodes'] if node['class_name'] == target_name]
-            if len(target_node) == 0:
-                print(target_name)
-                fail_target_nodes.append(target_name)
-                continue
-
-            target_id = target_node[0]['id']
-
-            edges = [{'from_id': object_id, 'relation_type': 'INSIDE', 'to_id': target_id}]
-
-            graph['nodes'] += nodes
-            graph['edges'] += edges
-            comm.reset(apartment)
-            success, message = comm.expand_scene(graph)
-            # print(success, message)
-
-            if success:
-                success_edges.append({'from_id': obj_name, 'relation_type': 'INSIDE', 'to_id': target_name})
-            else:
-                print({'from_id': obj_name, 'relation_type': 'INSIDE', 'to_id': target_name})
-
-        for target_name in obj_position['objects_surface']:
-            s, graph = comm.environment_graph()
-
-            target_node = [node for node in graph['nodes'] if node['class_name'] == target_name]
-            if len(target_node) == 0:
-                print(target_name)
-                fail_target_nodes.append(target_name)
-                continue
-
-            target_id = target_node[0]['id']
-
-            edges = [{'from_id': object_id, 'relation_type': 'ON', 'to_id': target_id}]
-
-            graph['nodes'] += nodes
-            graph['edges'] += edges
-            comm.reset(apartment)
-            success, message = comm.expand_scene(graph)
-            # print(success, message)
-
-            if success:
-                success_edges.append({'from_id': obj_name, 'relation_type': 'ON', 'to_id': target_name})
-            else:
-                print({'from_id': obj_name, 'relation_type': 'ON', 'to_id': target_name})

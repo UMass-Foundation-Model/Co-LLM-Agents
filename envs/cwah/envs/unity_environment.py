@@ -358,7 +358,7 @@ class UnityEnvironment(BaseUnityEnvironment):
 			rooms = list(self.init_rooms)
 
 		self.num_static_cameras = self.comm.camera_count()[1]
-		s, g = self.comm.add_character_camera(position=[0, 1.8, 0.15], rotation=[30,0,90], field_view=90, name="up_camera")
+		s, g = self.comm.add_character_camera(position=[0, 1.8, 0.15], rotation=[30,0,90], name="up_camera")
 		#field_view=90, does not work, since the unity env do not support it
 		for i in range(self.num_agents):
 			if i in self.agent_info:
