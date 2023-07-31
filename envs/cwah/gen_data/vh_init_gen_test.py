@@ -62,9 +62,6 @@ if __name__ == "__main__":
             continue
         predicates['test'].append((elem['pred_dict'], elem['task_name'], pred_str))
 
-    print("Done")
-
-
     simulator_args={
                    'file_name': args.exec_file,
                     'x_display': 0,
