@@ -17,6 +17,7 @@ For detailed instructions on the installation of the two embodied multi-agent en
 ### A simple start guide for `Communicative Watch-And-Help`:
 
 **Step 1**: Get the VirtualHome Simulator and API
+
 Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repository in envs dictionary:
 
 ```bash
@@ -28,11 +29,12 @@ Download the [Simulator](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3
 
 The files should be organized as follows:
 
-```
+```bash
 |--cwah/
 |--virtualhome/
 |--executable/
 ```
+
 **Step 2**: Install Requirements
 ```bash
 cd cwah
@@ -40,6 +42,7 @@ conda create --name cwah python=3.8
 conda activate cwah
 pip install -r requirements.txt
 ```
+
 ### A simple start guide for `ThreeDWorld Multi-Agent Transport`:
 
 Run the following commands step by step to setup the environments:
@@ -65,11 +68,13 @@ When running the scripts, be sure that you are in the parent folder of `scripts`
 
 ## Results
 
-Our experiment shows that llm agents can achieve comparable performance 
+Our experiment shows that llm agents can achieve comparable performance regard to human-designed hierarchical planning agents (hp agents):
 
-We found many interesting behavoirs of llm agents in the multi-agent settings:
+![quantitative_results](assets/quantitative_results.png)
 
-![cases](assets/cases.png)
+Besides, we found many interesting behavoirs of llm agents in the multi-agent settings:
+
+![qualitative_results](assets/qualitative_results.png)
 
 ## Citation
 If you find our work useful, please consider citing:
