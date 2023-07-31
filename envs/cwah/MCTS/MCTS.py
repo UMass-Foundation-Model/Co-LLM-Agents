@@ -524,26 +524,6 @@ class MCTS:
                                         obsed_subgoal_space.append(['{}_{}_{}'.format(subgoal_type, node['id'], surface), predicate, tmp_predicate])
                                     if node['id'] in inhand_objects:
                                         return [subgoal_space[-1]]
-                elif elements[0] == 'offOn':
-                    if id2node[elements[2]]['class_name'] in ['dishwasher', 'kitchentable']:
-                        containers = [[node['id'], node['class_name']] for node in state['nodes'] if node['class_name'] in ['kitchencabinets', 'kitchencounterdrawer', 'kitchencounter']]
-                    else:
-                        containers = [[node['id'], node['class_name']] for node in state['nodes'] if node['class_name'] == 'coffetable']
-                    for edge in state['edges']:
-                        if edge['relation_type'] == 'ON' and edge['to_id'] == int(elements[2]) and id2node[edge['from_id']]['class_name'] == elements[1]:
-                            container = random.choice(containers)
-                            predicate = '{}_{}_{}'.format('on' if container[1] == 'kitchencounter' else 'inside', edge['from_id'], container[0])
-                            goals[predicate] = 1
-                elif elements[0] == 'offInside':
-                    if id2node[elements[2]]['class_name'] in ['dishwasher', 'kitchentable']:
-                        containers = [[node['id'], node['class_name']] for node in state['nodes'] if node['class_name'] in ['kitchencabinets', 'kitchencounterdrawer', 'kitchencounter']]
-                    else:
-                        containers = [[node['id'], node['class_name']] for node in state['nodes'] if node['class_name'] == 'coffetable']
-                    for edge in state['edges']:
-                        if edge['relation_type'] == 'INSIDE' and edge['to_id'] == int(elements[2]) and id2node[edge['from_id']]['class_name'] == elements[1]:
-                            container = random.choice(containers)
-                            predicate = '{}_{}_{}'.format('on' if container[1] == 'kitchencounter' else 'inside', edge['from_id'], container[0])
-                            goals[predicate] = 1
             elif count > 0 and predicate in [opponent_predicate_1, opponent_predicate_2]: #and len(inhand_objects_opponent) == 0: can added, under testing
                 elements = predicate.split('_')
                 # print(elements)
