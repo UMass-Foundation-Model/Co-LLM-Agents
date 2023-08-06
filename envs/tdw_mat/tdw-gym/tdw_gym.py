@@ -22,16 +22,13 @@ from tdw.add_ons.occupancy_map import OccupancyMap
 from tdw.add_ons.object_manager import ObjectManager
 from PIL import Image
 
-import random
 import json
 import pickle
-from pkg_resources import resource_filename
-import shlex
-import subprocess
+from functools import partial
 
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
-                        screen_size = 256, exp = False, launch_build=True, gt_occupancy = False, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
+                        screen_size = 256, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
         self.data_prefix = data_prefix
         self.replicant_colors = None
         self.replicant_ids = None
@@ -42,6 +39,7 @@ class TDW(Env):
         self.goal_description = None
         self.object_manager = None
         self.occupancy_map = None
+        self.gt_mask = gt_mask
         self.satisfied = None
         self.count = 0
         self.reach_threshold = 2
@@ -135,6 +133,23 @@ class TDW(Env):
         self.fov = 0
         self.save_dir = save_dir
     
+    def obs_filter(self, obs):
+        if self.gt_mask:
+            return obs
+        else:
+            new_obs = copy.deepcopy(obs)
+            for agent in obs:
+                new_obs[agent]['seg_mask'] = np.zeros_like(new_obs[agent]['seg_mask'])
+                new_obs[agent]['visible_objects'] = []
+                while len(new_obs[agent]['visible_objects']) < 50:
+                    new_obs[agent]['visible_objects'].append({
+                        'id': None,
+                        'type': None,
+                        'seg_color': None,
+                        'name': None,
+                    })
+            return new_obs
+
     def get_object_type(self, id):
         if id in self.target_object_ids:
             return 0
@@ -200,9 +215,10 @@ class TDW(Env):
                           "show": False})
 
         # Set the field of view of the agent.
-        for replicant_id in self.controller.replicants:
-            self.controller.communicate({"$type": "set_field_of_view",
-                          "avatar_id" : str(replicant_id), "field_of_view" : 120})
+#        for replicant_id in self.controller.replicants:
+#            self.controller.communicate({"$type": "set_field_of_view",
+#                          "avatar_id" : str(replicant_id), "field_of_view" : 120})
+        self.fov = 54.43223
         
         # add a object manager for object position
         self.object_manager = ObjectManager()
@@ -252,13 +268,8 @@ class TDW(Env):
             for y in self.segmentation_colors.keys():
                 if x != y: assert (self.segmentation_colors[x] != self.segmentation_colors[y]).any()
 
-        data = self.controller.communicate({"$type": "send_field_of_view",
-                          "show": False,
-                          "frequency": "once"})
-        self.fov = 120
         self.num_step = 0
         self.num_frames = 0
-
         self.goal_description = {}
         for i in self.target_object_ids:
             if self.object_names[i] in self.goal_description:
@@ -296,8 +307,10 @@ class TDW(Env):
             'center_of_room': self.center_of_room,
             'check_pos_in_room': self.check_pos_in_room,
             'get_room_distance': self.get_room_distance,
+            'get_id_from_mask': partial(self.get_id_from_mask, agent_id=0),
         }
-        return self.get_obs(), info, env_api
+        self.obs = self.get_obs()
+        return self.obs_filter(self.obs), info, env_api
 
     def pos_to_2d_box_distance(self, px, py, rx1, ry1, rx2, ry2):
         if px < rx1:
@@ -383,6 +396,41 @@ class TDW(Env):
                 count += 1
                 self.satisfied[object_id] = True
         return count, len(self.target_object_ids), count == len(self.target_object_ids)
+
+    def get_id_from_mask(self, agent_id, mask, name = None):
+        r'''
+        Get the object id from the mask
+        '''
+        '''
+        print(1)
+        return {
+                    'id': None,
+                    'type': None,
+                    'seg_color': None,
+                    'name': None,
+                }
+        '''
+        print(np.sum(mask))
+        seg_with_mask = (self.obs[str(agent_id)]['seg_mask'] * np.expand_dims(mask, axis = -1)).reshape(-1, 3)
+        seg_with_mask = [tuple(x) for x in seg_with_mask]
+        seg_counter = Counter(seg_with_mask)
+        
+        for seg in seg_counter:
+            if seg == (0, 0, 0): continue
+            print(seg_counter[seg] / np.sum(mask))
+            print('seg_color:', seg)
+            print('name:', name)
+            if seg_counter[seg] / np.sum(mask) > 0.5:
+                for i in range(len(self.obs[str(agent_id)]['visible_objects'])):
+                    if self.obs[str(agent_id)]['visible_objects'][i]['seg_color'] == seg:
+                        print(self.obs[str(agent_id)]['visible_objects'][i])
+                        return self.obs[str(agent_id)]['visible_objects'][i]
+        return {
+                    'id': None,
+                    'type': None,
+                    'seg_color': None,
+                    'name': None,
+                }
 
     def get_obs(self):
         #upd containment:
@@ -591,9 +639,6 @@ class TDW(Env):
                     finish = True
                 elif self.controller.replicants[replicant_id].action.status != ActionStatus.ongoing:
                     curr_action = self.action_buffer[replicant_id].pop(0)
-                #    print(f"current action {curr_action}, agent {replicant_id}, info {self.controller.replicants[replicant_id].action.status}")
-                #    if "object" in curr_action:
-                #        print(self.controller.replicants[replicant_id].dynamic.transform.position, self.object_manager.transforms[int(curr_action["object"])].position)
                     if curr_action['type'] == 'move_forward':       # move forward 0.5m
                         self.controller.replicants[replicant_id].move_forward()
                     elif curr_action['type'] == 'turn_left':     # turn left by 15 degree
@@ -687,7 +732,8 @@ class TDW(Env):
         if done:
             info['reward'] = self.reward
 
-        return obs, reward, done, info
+        self.obs = obs
+        return self.obs_filter(self.obs), reward, done, info
      
     def render(self):
         return None

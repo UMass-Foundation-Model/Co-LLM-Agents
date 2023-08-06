@@ -7,8 +7,7 @@ import time
 import math
 import copy
 from PIL import Image
-
-
+from detection import tdw_detection
 
 CELL_SIZE = 0.125
 ANGLE = 15
@@ -18,8 +17,6 @@ def pos2map(x, z, _scene_bounds):
     i = int(round((x - _scene_bounds["x_min"]) / CELL_SIZE))
     j = int(round((z - _scene_bounds["z_min"]) / CELL_SIZE))
     return i, j
-
-
 
 class H_agent:
     def __init__(self, agent_id, logger, max_frames, output_dir = 'results'):
@@ -40,13 +37,16 @@ class H_agent:
         self.goal_objects = None
         self.goal_count = None
         self.drop_count = None
+        self.gt_mask = None
+        self.navigation_threshold = 5
+        self.detection_threshold = 5
+        # detection_threshold < navigation_threshold when not gt_mask
         self._scene_bounds = {
             "x_min": -15,
             "x_max": 15,
             "z_min": -7.5,
             "z_max": 7.5
         }
-        
     
     def pos2map(self, x, z):
         i = int(round((x - self._scene_bounds["x_min"]) / CELL_SIZE))
@@ -101,8 +101,7 @@ class H_agent:
     
     def cal_object_position(self, o_dict):
         pc = self.get_pc(o_dict['seg_color'])
-        if pc.shape[1] < 5:
-            return None
+        if pc.shape[1] < 5: return None
         position = pc.mean(1)
         return position[:3]
     
@@ -246,7 +245,7 @@ class H_agent:
         Z = np.maximum(Z, 0)
         Z = np.minimum(Z, self.map_size[1] - 1)
         
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] < 1.5))
+        index = np.where((depth > 0) & (depth < self.detection_threshold) & (rpc[1, :] < 1.5))
         XX = X[index].copy()
         ZZ = Z[index].copy()
         XX = XX.astype(np.int32)
@@ -254,14 +253,14 @@ class H_agent:
         local_known_map[XX, ZZ] = 1
 
         # It may be necessary to remove the object from the occupancy map
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
         XX = X[index].copy()
         ZZ = Z[index].copy()
         XX = XX.astype(np.int32)
         ZZ = ZZ.astype(np.int32)
         self.occupancy_map[XX, ZZ] = 0
         
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
         XX = X[index]
         ZZ = Z[index]
         XX = XX.astype(np.int32)
@@ -269,7 +268,7 @@ class H_agent:
         self.occupancy_map[XX, ZZ] = 1
         self.local_occupancy_map[XX, ZZ] = 1
 
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
         XX = X[index]
         ZZ = Z[index]
         XX = XX.astype(np.int32)
@@ -365,7 +364,7 @@ class H_agent:
                 self.goal = self.map2pos(i, j)
                 return
         
-    def reset(self, goal_objects = None, max_frames = 3000, output_dir = None, env_api = {}, agent_color = [-1, -1, -1], agent_id = 0):
+    def reset(self, goal_objects = None, max_frames = 3000, output_dir = None, env_api = {}, agent_color = [-1, -1, -1], agent_id = 0, gt_mask = True):
         self.is_reset = True
         self.env_api = env_api
         self.agent_color = agent_color
@@ -380,6 +379,13 @@ class H_agent:
         self.max_frames = max_frames
         if output_dir is not None:
             self.output_dir = output_dir
+        self.gt_mask = gt_mask
+        if self.gt_mask == True:
+            self.detection_threshold = 5
+        else:
+            self.detection_threshold = 3
+            self.detection_model = tdw_detection()
+        self.navigation_threshold = 5
         print(self.goal_objects, self.goal_count)
     
     def _reset(self):
@@ -565,7 +571,7 @@ class H_agent:
                 if self.occupancy_map[i, j] > 0:
                     draw_map[i, j] = 100
                 if self.known_map[i, j] == 0:
-                    assert self.occupancy_map[i, j] == 0
+                #    assert self.occupancy_map[i, j] == 0
                     draw_map[i, j] = 50
                 if self.wall_map[i, j] > 0:
                     draw_map[i, j] = 150
@@ -579,10 +585,30 @@ class H_agent:
         draw_map = np.rot90(draw_map, 1)
         cv2.imwrite(previous_name + '_map.png', draw_map)
 
+    def detect(self):
+        detect_result = self.detection_model(self.obs['rgb'])['predictions'][0]
+        obj_infos = []
+        curr_seg_mask = np.zeros((self.obs['rgb'].shape[0], self.obs['rgb'].shape[1], 3)).astype(np.int32)
+        curr_seg_mask.fill(-1)
+        for i in range(len(detect_result['labels'])):
+            if detect_result['scores'][i] < 0.3: continue
+            mask = detect_result['masks'][:,:,i]
+            label = detect_result['labels'][i]
+            curr_info = self.env_api['get_id_from_mask'](mask = mask, name = self.detection_model.cls_to_name_map(label)).copy()
+            if curr_info['id'] is not None:
+                obj_infos.append(curr_info)
+                curr_seg_mask[np.where(mask)] = curr_info['seg_color']
+        return obj_infos, curr_seg_mask 
+
     def act(self, obs):
         self.obs = obs.copy()
+        self.obs['rgb'] = self.obs['rgb'].transpose(1, 2, 0)
         if self.is_reset:
             self._reset()
+
+        if not self.gt_mask:
+            self.obs['visible_objects'], self.obs['seg_mask'] = self.detect()
+
         self.num_frames = obs['current_frames']
         self.num_step += 1
         self.obs['held_objects'] = [self.obs['held_objects'][0]['id'], self.obs['held_objects'][1]['id']]
@@ -600,7 +626,7 @@ class H_agent:
                 self.object_map[np.where(self.id_map == obj)] = 0
                 self.id_map[np.where(self.id_map == obj)] = 0
                 
-        if self.obs['status'] == 0: # ongoing
+        if self.obs['status'] == 0: # ongoing, only update the map, do not act.
             return {'type': 'ongoing'}
         if self.obs['valid'] == False: # invalid, the object is not there
             if self.last_action is not None and 'object' in self.last_action:
@@ -608,11 +634,6 @@ class H_agent:
                 self.id_map[np.where(self.id_map == self.last_action['object'])] = 0
                 
         self.get_object_list()
-#        print('finish:', self.finish)
-#        print('with_character:', self.with_character)
-#        print('grasp:', self.grasp)
-#        print(self.obs['held_objects'])
-#        print(self.mode, self.goal, self.sub_goal)
         if self.local_step % self.space_upd_freq == 0:
             self.local_occupancy_map = copy.deepcopy(self.occupancy_map)
 

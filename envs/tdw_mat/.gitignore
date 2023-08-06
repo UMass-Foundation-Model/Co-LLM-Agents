@@ -145,6 +145,7 @@ tdw_build/
 top_down_image/
 *.conf
 transport_challenge_asset_bundles/
+transport_challenge_asset_bundles.zip
 TDW_Linux.tar.gz.1
 *.jepg
 
@@ -158,3 +159,7 @@ backup/
 LLM/chat_raw.json
 action.pkl
 results.zip
+
+detection_pipeline/epoch_1.pth
+detection_pipeline/mmdetection/
+detection_pipeline/demo/

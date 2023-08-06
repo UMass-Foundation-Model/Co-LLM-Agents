@@ -21,8 +21,9 @@ gym.envs.registration.register(
 )
 
 class Challenge:
-    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 256, data_prefix = 'dataset/nips_dataset/'):
-        self.env = gym.make("transport_challenge_MA", port = port, number_of_agents = number_of_agents, save_dir = output_dir, max_frames = max_frames, new_setting = new_setting, screen_size = screen_size, data_prefix = data_prefix)
+    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 256, data_prefix = 'dataset/nips_dataset/', gt_mask = True):
+        self.env = gym.make("transport_challenge_MA", port = port, number_of_agents = number_of_agents, save_dir = output_dir, max_frames = max_frames, new_setting = new_setting, screen_size = screen_size, data_prefix = data_prefix, gt_mask = gt_mask)
+        self.gt_mask = gt_mask
         self.logger = logger
         self.logger.debug(port)
         self.logger.info("Environment Created")
@@ -55,16 +56,18 @@ class Challenge:
             self.logger.info(f"Resetting Environment ... data is {self.data[i]}")
             state, info, env_api = self.env.reset(seed=self.data[i]['seed'], options=self.data[i], output_dir = os.path.join(self.output_dir, str(i)))
             for id, agent in enumerate(agents):
+                if type(env_api) == list:
+                    curr_api = env_api[id]
+                else: curr_api = env_api
                 if info['goal_description'] is not None:
                     if agent.agent_type == 'h_agent':
-                        agent.reset(goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(i)), env_api = env_api, agent_color = info['agent_colors'][id], agent_id = id)
+                        agent.reset(goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(i)), env_api = curr_api, agent_color = info['agent_colors'][id], agent_id = id, gt_mask = self.gt_mask)
                     elif agent.agent_type == 'lm_agent':
-                        agent.reset(obs = state[str(id)], goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(i)), env_api = env_api, rooms_name=info['rooms_name'])
+                        agent.reset(obs = state[str(id)], goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(i)), env_api = curr_api, rooms_name=info['rooms_name'], gt_mask = self.gt_mask)
                     else:
                         raise Exception(f"{agent.agent_type} not available")
                 else:
                     agent.reset(output_dir = os.path.join(self.output_dir, str(i)))
-            #for debug
             self.env.save_images(os.path.join(self.output_dir, str(i), 'Images'))
             self.logger.info(f"Environment Reset. Took {time.time() - start_time} secs")
             local_finish = self.env.check_goal()
@@ -132,6 +135,7 @@ def main():
     parser.add_argument("--new_setting", default=True, action='store_true')
     parser.add_argument("--communication", action='store_true')
     parser.add_argument("--debug", action='store_true')
+    parser.add_argument("--no_gt_mask", action='store_true')
     # LLM parameters
     parser.add_argument('--source', default='openai',
         choices=['huggingface', 'openai'],
@@ -156,7 +160,7 @@ def main():
     if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
     logger = init_logs(args.output_dir)
 
-    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix)
+    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask)
     agents = []
     for i, agent in enumerate(args.agents):
         if agent == 'h_agent':
