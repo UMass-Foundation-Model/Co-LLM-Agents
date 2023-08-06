@@ -41,7 +41,7 @@ class tdw_detection:
     def cls_to_name_map(self, cls_id):
         return self.name_map[cls_id]
 
-    def __call__(self, img_path, decode = True, no_save_pred = False, out_dir = 'outputs'):
+    def __call__(self, img_path, decode = True, no_save_pred = True, out_dir = ''):
         # input can be a path or rgb image
         result = self.inferencer(img_path, no_save_pred = no_save_pred, out_dir = out_dir)
         if decode and result['predictions'][0]['masks'] != []:

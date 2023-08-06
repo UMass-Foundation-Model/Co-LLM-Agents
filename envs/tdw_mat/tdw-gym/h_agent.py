@@ -7,7 +7,6 @@ import time
 import math
 import copy
 from PIL import Image
-from detection import tdw_detection
 
 CELL_SIZE = 0.125
 ANGLE = 15
@@ -384,6 +383,9 @@ class H_agent:
             self.detection_threshold = 5
         else:
             self.detection_threshold = 3
+            from detection import tdw_detection
+            # only here we need to use the detection model, other places we use the gt mask
+            # so we put the import here
             self.detection_model = tdw_detection()
         self.navigation_threshold = 5
         print(self.goal_objects, self.goal_count)

@@ -171,7 +171,7 @@ class TDW(Env):
         input:
             data_id: reset based on the data_id
         """
-        #DWH: changes it to always, since in each step, we need to get the image
+        # Changes it to always, since in each step, we need to get the image
         if self.controller is not None:
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
@@ -195,7 +195,8 @@ class TDW(Env):
         super().reset(seed=seed)
         self.seed = np.random.RandomState(seed)
         self.scene_info = scene_info
-        #DWH: now the scene is fixed, so num_containers and num_target_objects are not used anymore in new settings
+        
+        # Now the scene is fixed, so num_containers and num_target_objects are not used anymore in new settings
         self.controller.start_floorplan_trial(scene=scene, layout=layout, replicants=self.number_of_agents, num_containers=4, num_target_objects=10,
                                    random_seed=seed, task = task, data_prefix = self.data_prefix)
         
@@ -206,7 +207,7 @@ class TDW(Env):
                                    look_at={"x": 0, "y": -25, "z": 0})
             self.controller.add_ons.append(camera)
 
-        # Add a gt occupancy map.
+        # Add a gt occupancy map. In the standard setting, we don't need this
         if self.gt_occupancy:
             self.occupancy_map = OccupancyMap()
             self.controller.add_ons.append(self.occupancy_map)
@@ -215,25 +216,30 @@ class TDW(Env):
                           "show": False})
 
         # Set the field of view of the agent.
-#        for replicant_id in self.controller.replicants:
-#            self.controller.communicate({"$type": "set_field_of_view",
-#                          "avatar_id" : str(replicant_id), "field_of_view" : 120})
-        self.fov = 54.43223
+        if self.gt_mask:
+            for replicant_id in self.controller.replicants:
+                self.controller.communicate({"$type": "set_field_of_view",
+                              "avatar_id" : str(replicant_id), "field_of_view" : 120})
+            self.fov = 120
+        # Since detection model is trained in normal FOV, we need to change the FOV to normal
+        else: self.fov = 54.43223
         
-        # add a object manager for object position
+        # Add a object manager for object position
         self.object_manager = ObjectManager()
         self.controller.add_ons.append(self.object_manager)
 
         data = self.controller.communicate({"$type": "send_segmentation_colors",
                           "show": False,
                           "frequency": "once"})
-
+        
+        # Show the occupancy map. In the standard setting, we don't need this
         if self.gt_occupancy:            
             self.occupancy_map.show()
             print(self.occupancy_map.occupancy_map)
             h, w = self.occupancy_map.occupancy_map.shape
             print(self.occupancy_map.occupancy_map.shape)
 
+        # Make name easier to read
         names_mapping_path = f'./dataset/name_map.json'
         with open(names_mapping_path, 'r') as f: self.names_mapping = json.load(f)
 
@@ -401,29 +407,19 @@ class TDW(Env):
         r'''
         Get the object id from the mask
         '''
-        '''
-        print(1)
-        return {
-                    'id': None,
-                    'type': None,
-                    'seg_color': None,
-                    'name': None,
-                }
-        '''
-        print(np.sum(mask))
         seg_with_mask = (self.obs[str(agent_id)]['seg_mask'] * np.expand_dims(mask, axis = -1)).reshape(-1, 3)
         seg_with_mask = [tuple(x) for x in seg_with_mask]
         seg_counter = Counter(seg_with_mask)
         
         for seg in seg_counter:
             if seg == (0, 0, 0): continue
-            print(seg_counter[seg] / np.sum(mask))
-            print('seg_color:', seg)
-            print('name:', name)
+            #print(seg_counter[seg] / np.sum(mask))
+            #print('seg_color:', seg)
+            #print('name:', name)
             if seg_counter[seg] / np.sum(mask) > 0.5:
                 for i in range(len(self.obs[str(agent_id)]['visible_objects'])):
                     if self.obs[str(agent_id)]['visible_objects'][i]['seg_color'] == seg:
-                        print(self.obs[str(agent_id)]['visible_objects'][i])
+                        #print(self.obs[str(agent_id)]['visible_objects'][i])
                         return self.obs[str(agent_id)]['visible_objects'][i]
         return {
                     'id': None,
