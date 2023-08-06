@@ -22,7 +22,7 @@
 
 Run the following commands step by step to setup the environments:
 
-```
+```bash
 cd tdw_mat
 conda create -n tdw_mat python=3.9
 conda activate tdw_mat
@@ -31,7 +31,7 @@ pip3 install -e .
 
 After that, you can run the demo scene to verify your setup:
 
-```
+```bash
 python demo/demo_scene.py
 ```
 
@@ -39,10 +39,19 @@ python demo/demo_scene.py
 
 We prepare the example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `scripts`. For example, to run experiments with two LLM Agents, run the following command:
 
-
-```
+```bash
 ./scripts/test_LMs.sh
 ```
+
+Download `transport challenge asset bundles`: Commonly it is automatically downloaded when running the scripts. If you meet problem, you can download it [here](https://drive.google.com/file/d/1us2hpJj3_u1Ti_R0OrqVDgUQbdMPUaKN/view?usp=sharing), and unzip it in the `TDW_MAT` folder.
+
+## Detection Model
+
+Besides use ground truth segmentation mask in `TDW_MAT`, we also have `no-gt-mask` mode. Here you need to train a segmentation model by your own.
+
+By add `--no_gt_mask` in the scripts, the env will not provide ground truth segmentation mask anymore, and thus the agents need to detect them. 
+
+We finetune a Resnet model as our detection baseline, which is based on `mmdetection`. You can download the config and the model weight [here](https://drive.google.com/drive/folders/1hx7xDn-dmTWDwuI-fFgyxQaaKkA_vofB?usp=sharing). If you want to use it, put it in `detection pipeline` folder and add `--no_gt_mask` into scripts.
 
 ## More details on the environment
 
