@@ -1,4 +1,4 @@
-ps ux | grep port\ 3062 | awk {'print $2'} | xargs kill
+ps ux | grep port\ 3062 | awk {'print $2'} | xargs -9 kill
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
@@ -13,4 +13,4 @@ python3 tdw-gym/challenge.py \
 --data_prefix dataset/dataset_test/ \
 --debug
 
-ps ux | grep port\ 3062 | awk {'print $2'} | xargs kill
+ps ux | grep port\ 3062 | awk {'print $2'} | xargs -9 kill

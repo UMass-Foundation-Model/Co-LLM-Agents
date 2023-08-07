@@ -22,7 +22,7 @@ def pos2map(x, z, _scene_bounds):
 
 
 class lm_agent:
-	def __init__(self, agent_id, logger, max_frames, args, output_dir = 'results', ):
+	def  __init__(self, agent_id, logger, max_frames, args, output_dir = 'results'):
 		self.with_oppo = None
 		self.oppo_pos = None
 		self.with_character = None
@@ -379,7 +379,7 @@ class lm_agent:
 								  (g_i, g_j), allow_diagonal=False)
 		return path
 
-	def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None):
+	def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, gt_mask = True):
 		self.invalid_count = 0
 		self.obs = obs
 		self.env_api = env_api
@@ -429,10 +429,18 @@ class lm_agent:
 		
 		self.plan = None
 		self.action_history = [f"go to {self.current_room} at initial step"]
-		self.dialogue_history = []
+		self.dialogue_history = []        
+		if self.gt_mask == True:
+			self.detection_threshold = 5
+		else:
+			self.detection_threshold = 3
+			from detection import tdw_detection
+            # only here we need to use the detection model, other places we use the gt mask
+            # so we put the import here
+			self.detection_model = tdw_detection()
+		self.navigation_threshold = 5
 		print(self.rooms_name)
 		self.LLM.reset(self.rooms_name, self.goal_objects)
-
 
 	def move(self, target_pos):
 		self.local_step += 1
@@ -514,7 +522,6 @@ class lm_agent:
 		action = {"type": 1}
 		return action
 
-
 	def gograsp(self):
 		target_object_id = int(self.plan.split(' ')[-1][1:-1])
 		if target_object_id in self.holding_objects_id:
@@ -569,7 +576,7 @@ class lm_agent:
 		return action
 
 	def LLM_plan(self):
-		return self.LLM.run(self.num_frames, self.current_room, self.rooms_explored, self.obs['held_objects'],[self.object_info[x] for x in self.satisfied], self.object_list, self.object_per_room, self.action_history, self.dialogue_history, self.obs['oppo_held_objects'], self.oppo_last_room)
+		return self.LLM.run(self.num_frames, self.current_room, self.rooms_explored, self.obs['held_objects'],[self.object_info[x] for x in self.satisfied if x in self.object_info], self.object_list, self.object_per_room, self.action_history, self.dialogue_history, self.obs['oppo_held_objects'], self.oppo_last_room)
 
 	def act(self, obs):
 		self.obs = obs
@@ -583,14 +590,14 @@ class lm_agent:
 			self.invalid_count += 1
 			self.plan = None
 			assert self.invalid_count < 10, "invalid action for 10 times"
-    
+	
 		if self.communication:
 			for i in range(len(obs["messages"])):
 				if obs["messages"][i] is not None:
 					self.dialogue_history.append(f"{self.agent_names[i]}: {copy.deepcopy(obs['messages'][i])}")
 		if self.obs['status'] == 0: # ongoing
 			return {'type': 'ongoing'}
-    
+	
 		self.position = self.obs["agent"][:3]
 		self.forward = self.obs["agent"][3:]
 		current_room = self.env_api['belongs_to_which_room'](self.position)

@@ -10,7 +10,7 @@ class tdw_detection:
         self.inferencer = DetInferencer(
             model = "detection_pipeline/config.py",
             weights = "detection_pipeline/epoch_1.pth",
-            device = "cpu"
+            device = "cuda"
         )
 
         self.name_map = {
@@ -54,9 +54,9 @@ class tdw_detection:
 
 def main():
     tdw = tdw_detection()
-    result = tdw("detection_pipeline/demo/7_14.png", decode = False, no_save_pred = False, out_dir = 'outputs')
+    result = tdw("demo/demo_images/img_0.jpg", decode = False, no_save_pred = False, out_dir = 'outputs')
     print(result)
-    img = cv2.imread("detection_pipeline/demo/7_14.png")
+    img = cv2.imread("demo/demo_images/img_0.jpg")
     img = np.array(img)
     result = tdw(img, decode = True)
     print(result)

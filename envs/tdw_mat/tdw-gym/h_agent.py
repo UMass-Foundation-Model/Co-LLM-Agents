@@ -397,7 +397,6 @@ class H_agent:
         self.last_action = None
         self.oppo_pos = None
         #self._scene_bounds = self.info['_scene_bounds']
-        
         #0: free, 1: occupied, 2: unknown
         self.occupancy_map = np.zeros(self.map_size, np.int32)
         self.last_dist_map = np.zeros(self.map_size, np.int32)
@@ -586,6 +585,7 @@ class H_agent:
         #rotate the map 90 degrees anti-clockwise
         draw_map = np.rot90(draw_map, 1)
         cv2.imwrite(previous_name + '_map.png', draw_map)
+        cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
 
     def detect(self):
         detect_result = self.detection_model(self.obs['rgb'])['predictions'][0]
@@ -600,7 +600,9 @@ class H_agent:
             if curr_info['id'] is not None:
                 obj_infos.append(curr_info)
                 curr_seg_mask[np.where(mask)] = curr_info['seg_color']
-        return obj_infos, curr_seg_mask 
+        curr_with_seg, curr_seg_flag = self.env_api['get_with_character_mask'](self.with_character)
+        curr_seg_mask = curr_seg_mask * (1 - curr_seg_flag) + curr_with_seg * curr_seg_flag
+        return obj_infos, curr_seg_mask
 
     def act(self, obs):
         self.obs = obs.copy()

@@ -158,6 +158,16 @@ class TDW(Env):
         if self.object_categories[id] == 'bed':
             return 2
         return 4
+
+    def get_with_character_mask(self, agent_id, character_object_ids):
+        color_set = [self.segmentation_colors[id] for id in character_object_ids if id in self.segmentation_colors] + [self.replicant_colors[id] for id in character_object_ids if id in self.replicant_colors]
+        curr_with_seg = np.zeros_like(self.obs[str(agent_id)]['seg_mask'])
+        curr_seg_flag = np.zeros((self.screen_size, self.screen_size)).astype(np.bool)
+        for i in range(len(color_set)):
+            color_pos = (self.obs[str(agent_id)]['seg_mask'] == np.array(color_set[0])).all(axis=2)
+            curr_seg_flag = np.logical_or(curr_seg_flag, color_pos)
+            curr_with_seg[color_pos] = color_set
+        return curr_with_seg, curr_seg_flag
         
     def reset(
         self,
@@ -308,13 +318,14 @@ class TDW(Env):
             'rooms_name': self.all_rooms,
             'agent_colors': self.replicant_colors,
         }
-        env_api = {
+        env_api = [{
             'belongs_to_which_room': self.belongs_to_which_room,
             'center_of_room': self.center_of_room,
             'check_pos_in_room': self.check_pos_in_room,
             'get_room_distance': self.get_room_distance,
-            'get_id_from_mask': partial(self.get_id_from_mask, agent_id=0),
-        }
+            'get_id_from_mask': partial(self.get_id_from_mask, agent_id=i),
+            'get_with_character_mask': partial(self.get_with_character_mask, agent_id=i),
+        } for i in range(self.number_of_agents)]
         self.obs = self.get_obs()
         return self.obs_filter(self.obs), info, env_api
 
