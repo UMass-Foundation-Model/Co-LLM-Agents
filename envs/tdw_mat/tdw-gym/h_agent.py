@@ -383,10 +383,10 @@ class H_agent:
             self.detection_threshold = 5
         else:
             self.detection_threshold = 3
-            from detection import tdw_detection
+            from detection import init_detection
             # only here we need to use the detection model, other places we use the gt mask
             # so we put the import here
-            self.detection_model = tdw_detection()
+            self.detection_model = init_detection()
         self.navigation_threshold = 5
         print(self.goal_objects, self.goal_count)
     
@@ -565,7 +565,6 @@ class H_agent:
                 self.sub_goal = -1
     
     def draw_map(self, previous_name):
-        #DWH: draw the map
         draw_map = np.zeros((self.map_size[0], self.map_size[1], 3))
         for i in range(self.map_size[0]):
             for j in range(self.map_size[1]):
@@ -600,8 +599,8 @@ class H_agent:
             if curr_info['id'] is not None:
                 obj_infos.append(curr_info)
                 curr_seg_mask[np.where(mask)] = curr_info['seg_color']
-        curr_with_seg, curr_seg_flag = self.env_api['get_with_character_mask'](self.with_character)
-        curr_seg_mask = curr_seg_mask * (1 - curr_seg_flag) + curr_with_seg * curr_seg_flag
+        curr_with_seg, curr_seg_flag = self.env_api['get_with_character_mask'](character_object_ids = self.with_character)
+        curr_seg_mask = curr_seg_mask * (~ np.expand_dims(curr_seg_flag, axis = -1)) + curr_with_seg * np.expand_dims(curr_seg_flag, axis = -1)
         return obj_infos, curr_seg_mask
 
     def act(self, obs):

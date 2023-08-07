@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']="TRUE"
-
+detector = None
 class tdw_detection:
     def __init__(self):
         self.inferencer = DetInferencer(
@@ -51,6 +51,12 @@ class tdw_detection:
             # print('mask:', mask_format)
             result['predictions'][0]['masks'] = mask_format
         return result
+
+def init_detection():
+    global detector
+    if detector == None:
+        detector = tdw_detection()
+    return detector
 
 def main():
     tdw = tdw_detection()

@@ -162,11 +162,11 @@ class TDW(Env):
     def get_with_character_mask(self, agent_id, character_object_ids):
         color_set = [self.segmentation_colors[id] for id in character_object_ids if id in self.segmentation_colors] + [self.replicant_colors[id] for id in character_object_ids if id in self.replicant_colors]
         curr_with_seg = np.zeros_like(self.obs[str(agent_id)]['seg_mask'])
-        curr_seg_flag = np.zeros((self.screen_size, self.screen_size)).astype(np.bool)
+        curr_seg_flag = np.zeros((self.screen_size, self.screen_size), dtype = bool)
         for i in range(len(color_set)):
-            color_pos = (self.obs[str(agent_id)]['seg_mask'] == np.array(color_set[0])).all(axis=2)
+            color_pos = (self.obs[str(agent_id)]['seg_mask'] == np.array(color_set[i])).all(axis=2)
             curr_seg_flag = np.logical_or(curr_seg_flag, color_pos)
-            curr_with_seg[color_pos] = color_set
+            curr_with_seg[color_pos] = color_set[i]
         return curr_with_seg, curr_seg_flag
         
     def reset(
