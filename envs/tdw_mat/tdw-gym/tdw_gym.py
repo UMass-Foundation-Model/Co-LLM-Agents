@@ -224,7 +224,10 @@ class TDW(Env):
             self.occupancy_map.generate(cell_size=0.125, once = False)
         self.controller.communicate({"$type": "set_floorplan_roof",
                           "show": False})
-
+        # Bright case, not support when not use gt mask    
+        if not self.gt_mask:
+            self.controller.communicate({"$type": "add_hdri_skybox", "name": "sky_white", "url": "https://tdw-public.s3.amazonaws.com/hdri_skyboxes/linux/2019.1/sky_white", "exposure": 2, "initial_skybox_rotation": 0, "sun_elevation": 90, "sun_initial_angle": 0, "sun_intensity": 1.25})
+            
         # Set the field of view of the agent.
         if self.gt_mask:
             for replicant_id in self.controller.replicants:
@@ -297,9 +300,9 @@ class TDW(Env):
         with open(room_type_path, 'r') as f: room_types = json.load(f)
         
         self.rooms_name = {}
-        #now return <room_type> (id) for each room.
+        #now return <room_type> (id) for each room.        
         if type(layout) == str: now_layout = int(layout[0])
-        else: now_layout = layout
+        else: now_layout = int(layout)
         for i, rooms_name in enumerate(room_types[scene[0]][now_layout]):
             if rooms_name not in ['Kitchen', 'Livingroom', 'Bedroom', 'Office']:
                 the_name = None
