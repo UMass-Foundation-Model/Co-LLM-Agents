@@ -1,0 +1,8 @@
+type,prompt
+base,"I'm $AGENT_NAME$. My friend $OPPO_NAME$ and I want to transport as many target objects as possible to the bed with the help of containers within 3000 steps. I can hold two things at a time, and they can be objects or containers. I can grasp containers and put objects into them to hold more objects at a time. Given our shared goal, my progress, and previous actions, please help me choose the best available action to achieve the goal as soon as possible. Note that a container can contain three objects, and will be lost once transported to the bed. I can only put objects into the container I hold after grasping it. All objects are denoted as <name> (id), such as <table> (712). Actions take several steps to finish. It may be costly to go to another room or transport to the bed, use these actions sparingly.
+Goal: $GOAL$
+Progress: $PROGRESS$
+Previous actions: $ACTION_HISTORY$
+Available actions: (You can only choose the action in the list)
+$AVAILABLE_ACTIONS$
+Answer:"

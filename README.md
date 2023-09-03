@@ -49,7 +49,7 @@ pip install -r requirements.txt
 
 ### A simple start guide for `ThreeDWorld Multi-Agent Transport`:
 
-Run the following commands step by step to setup the environments:
+Run the following commands step by step to set up the environments:
 
 ```bash
 cd envs/tdw_mat
@@ -57,6 +57,8 @@ conda create -n tdw_mat python=3.9
 conda activate tdw_mat
 pip3 install -e .
 ```
+
+If you're running TDW on a remote Linux server, follow the [TDW Installation Document](https://github.com/threedworld-mit/tdw/blob/master/Documentation/lessons/setup/install.md) to configure the X server.
 
 After that, you can run the demo scene to verify your setup:
 
