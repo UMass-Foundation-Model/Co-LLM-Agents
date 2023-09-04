@@ -12,6 +12,8 @@ Project Website: [Co-LLM-Agents](https://vis-www.cs.umass.edu/Co-LLM-Agents/)
 
 ## News
 
+**[9/4/2023]**: We add the vision detection module in `ThreeDWorld Multi-Agent Transport` with a fine-tuned Resnet model. Now, the environment supports both ground truth segmentation and vision detection versions. If you want to use it, please take a look at the [README](envs/tdw_mat/README.md) in tdw_mat for a detailed description.
+
 **[8/1/2023]**: We update the VirtualHome Simulator executable we used [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you met `XDG_RUNTIME_DIR not set in the environment` error previously, please check if you are using the new version we provided.
 
 ## Installation

@@ -22,16 +22,13 @@ from tdw.add_ons.occupancy_map import OccupancyMap
 from tdw.add_ons.object_manager import ObjectManager
 from PIL import Image
 
-import random
 import json
 import pickle
-from pkg_resources import resource_filename
-import shlex
-import subprocess
+from functools import partial
 
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
-                        screen_size = 256, exp = False, launch_build=True, gt_occupancy = False, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
+                        screen_size = 256, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
         self.data_prefix = data_prefix
         self.replicant_colors = None
         self.replicant_ids = None
@@ -42,6 +39,7 @@ class TDW(Env):
         self.goal_description = None
         self.object_manager = None
         self.occupancy_map = None
+        self.gt_mask = gt_mask
         self.satisfied = None
         self.count = 0
         self.reach_threshold = 2
@@ -135,6 +133,23 @@ class TDW(Env):
         self.fov = 0
         self.save_dir = save_dir
     
+    def obs_filter(self, obs):
+        if self.gt_mask:
+            return obs
+        else:
+            new_obs = copy.deepcopy(obs)
+            for agent in obs:
+                new_obs[agent]['seg_mask'] = np.zeros_like(new_obs[agent]['seg_mask'])
+                new_obs[agent]['visible_objects'] = []
+                while len(new_obs[agent]['visible_objects']) < 50:
+                    new_obs[agent]['visible_objects'].append({
+                        'id': None,
+                        'type': None,
+                        'seg_color': None,
+                        'name': None,
+                    })
+            return new_obs
+
     def get_object_type(self, id):
         if id in self.target_object_ids:
             return 0
@@ -143,6 +158,16 @@ class TDW(Env):
         if self.object_categories[id] == 'bed':
             return 2
         return 4
+
+    def get_with_character_mask(self, agent_id, character_object_ids):
+        color_set = [self.segmentation_colors[id] for id in character_object_ids if id in self.segmentation_colors] + [self.replicant_colors[id] for id in character_object_ids if id in self.replicant_colors]
+        curr_with_seg = np.zeros_like(self.obs[str(agent_id)]['seg_mask'])
+        curr_seg_flag = np.zeros((self.screen_size, self.screen_size), dtype = bool)
+        for i in range(len(color_set)):
+            color_pos = (self.obs[str(agent_id)]['seg_mask'] == np.array(color_set[i])).all(axis=2)
+            curr_seg_flag = np.logical_or(curr_seg_flag, color_pos)
+            curr_with_seg[color_pos] = color_set[i]
+        return curr_with_seg, curr_seg_flag
         
     def reset(
         self,
@@ -156,7 +181,7 @@ class TDW(Env):
         input:
             data_id: reset based on the data_id
         """
-        #DWH: changes it to always, since in each step, we need to get the image
+        # Changes it to always, since in each step, we need to get the image
         if self.controller is not None:
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
@@ -180,7 +205,8 @@ class TDW(Env):
         super().reset(seed=seed)
         self.seed = np.random.RandomState(seed)
         self.scene_info = scene_info
-        #DWH: now the scene is fixed, so num_containers and num_target_objects are not used anymore in new settings
+        
+        # Now the scene is fixed, so num_containers and num_target_objects are not used anymore in new settings
         self.controller.start_floorplan_trial(scene=scene, layout=layout, replicants=self.number_of_agents, num_containers=4, num_target_objects=10,
                                    random_seed=seed, task = task, data_prefix = self.data_prefix)
         
@@ -191,33 +217,42 @@ class TDW(Env):
                                    look_at={"x": 0, "y": -25, "z": 0})
             self.controller.add_ons.append(camera)
 
-        # Add a gt occupancy map.
+        # Add a gt occupancy map. In the standard setting, we don't need this
         if self.gt_occupancy:
             self.occupancy_map = OccupancyMap()
             self.controller.add_ons.append(self.occupancy_map)
             self.occupancy_map.generate(cell_size=0.125, once = False)
         self.controller.communicate({"$type": "set_floorplan_roof",
                           "show": False})
-
+        # Bright case, not support when not use gt mask    
+        if self.gt_mask:
+            self.controller.communicate({"$type": "add_hdri_skybox", "name": "sky_white", "url": "https://tdw-public.s3.amazonaws.com/hdri_skyboxes/linux/2019.1/sky_white", "exposure": 2, "initial_skybox_rotation": 0, "sun_elevation": 90, "sun_initial_angle": 0, "sun_intensity": 1.25})
+            
         # Set the field of view of the agent.
-        for replicant_id in self.controller.replicants:
-            self.controller.communicate({"$type": "set_field_of_view",
-                          "avatar_id" : str(replicant_id), "field_of_view" : 120})
+        if self.gt_mask:
+            for replicant_id in self.controller.replicants:
+                self.controller.communicate({"$type": "set_field_of_view",
+                              "avatar_id" : str(replicant_id), "field_of_view" : 120})
+            self.fov = 120
+        # Since detection model is trained in normal FOV, we need to change the FOV to normal
+        else: self.fov = 54.43223
         
-        # add a object manager for object position
+        # Add a object manager for object position
         self.object_manager = ObjectManager()
         self.controller.add_ons.append(self.object_manager)
 
         data = self.controller.communicate({"$type": "send_segmentation_colors",
                           "show": False,
                           "frequency": "once"})
-
+        
+        # Show the occupancy map. In the standard setting, we don't need this
         if self.gt_occupancy:            
             self.occupancy_map.show()
             print(self.occupancy_map.occupancy_map)
             h, w = self.occupancy_map.occupancy_map.shape
             print(self.occupancy_map.occupancy_map.shape)
 
+        # Make name easier to read
         names_mapping_path = f'./dataset/name_map.json'
         with open(names_mapping_path, 'r') as f: self.names_mapping = json.load(f)
 
@@ -252,13 +287,8 @@ class TDW(Env):
             for y in self.segmentation_colors.keys():
                 if x != y: assert (self.segmentation_colors[x] != self.segmentation_colors[y]).any()
 
-        data = self.controller.communicate({"$type": "send_field_of_view",
-                          "show": False,
-                          "frequency": "once"})
-        self.fov = 120
         self.num_step = 0
         self.num_frames = 0
-
         self.goal_description = {}
         for i in self.target_object_ids:
             if self.object_names[i] in self.goal_description:
@@ -270,9 +300,9 @@ class TDW(Env):
         with open(room_type_path, 'r') as f: room_types = json.load(f)
         
         self.rooms_name = {}
-        #now return <room_type> (id) for each room.
+        #now return <room_type> (id) for each room.        
         if type(layout) == str: now_layout = int(layout[0])
-        else: now_layout = layout
+        else: now_layout = int(layout)
         for i, rooms_name in enumerate(room_types[scene[0]][now_layout]):
             if rooms_name not in ['Kitchen', 'Livingroom', 'Bedroom', 'Office']:
                 the_name = None
@@ -291,13 +321,16 @@ class TDW(Env):
             'rooms_name': self.all_rooms,
             'agent_colors': self.replicant_colors,
         }
-        env_api = {
+        env_api = [{
             'belongs_to_which_room': self.belongs_to_which_room,
             'center_of_room': self.center_of_room,
             'check_pos_in_room': self.check_pos_in_room,
             'get_room_distance': self.get_room_distance,
-        }
-        return self.get_obs(), info, env_api
+            'get_id_from_mask': partial(self.get_id_from_mask, agent_id=i),
+            'get_with_character_mask': partial(self.get_with_character_mask, agent_id=i),
+        } for i in range(self.number_of_agents)]
+        self.obs = self.get_obs()
+        return self.obs_filter(self.obs), info, env_api
 
     def pos_to_2d_box_distance(self, px, py, rx1, ry1, rx2, ry2):
         if px < rx1:
@@ -383,6 +416,31 @@ class TDW(Env):
                 count += 1
                 self.satisfied[object_id] = True
         return count, len(self.target_object_ids), count == len(self.target_object_ids)
+
+    def get_id_from_mask(self, agent_id, mask, name = None):
+        r'''
+        Get the object id from the mask
+        '''
+        seg_with_mask = (self.obs[str(agent_id)]['seg_mask'] * np.expand_dims(mask, axis = -1)).reshape(-1, 3)
+        seg_with_mask = [tuple(x) for x in seg_with_mask]
+        seg_counter = Counter(seg_with_mask)
+        
+        for seg in seg_counter:
+            if seg == (0, 0, 0): continue
+            #print(seg_counter[seg] / np.sum(mask))
+            #print('seg_color:', seg)
+            #print('name:', name)
+            if seg_counter[seg] / np.sum(mask) > 0.5:
+                for i in range(len(self.obs[str(agent_id)]['visible_objects'])):
+                    if self.obs[str(agent_id)]['visible_objects'][i]['seg_color'] == seg:
+                        #print(self.obs[str(agent_id)]['visible_objects'][i])
+                        return self.obs[str(agent_id)]['visible_objects'][i]
+        return {
+                    'id': None,
+                    'type': None,
+                    'seg_color': None,
+                    'name': None,
+                }
 
     def get_obs(self):
         #upd containment:
@@ -591,9 +649,6 @@ class TDW(Env):
                     finish = True
                 elif self.controller.replicants[replicant_id].action.status != ActionStatus.ongoing:
                     curr_action = self.action_buffer[replicant_id].pop(0)
-                #    print(f"current action {curr_action}, agent {replicant_id}, info {self.controller.replicants[replicant_id].action.status}")
-                #    if "object" in curr_action:
-                #        print(self.controller.replicants[replicant_id].dynamic.transform.position, self.object_manager.transforms[int(curr_action["object"])].position)
                     if curr_action['type'] == 'move_forward':       # move forward 0.5m
                         self.controller.replicants[replicant_id].move_forward()
                     elif curr_action['type'] == 'turn_left':     # turn left by 15 degree
@@ -687,7 +742,8 @@ class TDW(Env):
         if done:
             info['reward'] = self.reward
 
-        return obs, reward, done, info
+        self.obs = obs
+        return self.obs_filter(self.obs), reward, done, info
      
     def render(self):
         return None
