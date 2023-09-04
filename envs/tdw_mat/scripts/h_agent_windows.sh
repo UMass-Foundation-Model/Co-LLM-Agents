@@ -1,1 +1,0 @@
-python tdw-gym/challenge.py --output_dir results --run_id 1006 --port 3064 --agents h_agent --prompt_template_path LLM/prompt_nocom.csv --max_tokens 256 --cot --lm_id gpt-4 --max_frames 3000 --data_prefix dataset/nips_dataset/ --debug --no_gt_mask

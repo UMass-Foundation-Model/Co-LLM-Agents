@@ -2,7 +2,7 @@ ps ux | grep port\ 1091 | awk {'print $2'} | xargs kill
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
---run_id 100010 \
+--run_id 4001 \
 --port 1091 \
 --agents lm_agent \
 --lm_id gpt-4 \

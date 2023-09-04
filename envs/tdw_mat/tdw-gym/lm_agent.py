@@ -392,8 +392,6 @@ class lm_agent:
         goal_count = sum([v for k, v in goal_objects.items()])
         if output_dir is not None:
             self.output_dir = output_dir
-        if self.debug:
-            self.logger.info(self.goal_objects, goal_count)
         self.last_action = None
 
         #0: free, 1: occupied, 2: unknown
@@ -430,16 +428,16 @@ class lm_agent:
         
         self.plan = None
         self.action_history = [f"go to {self.current_room} at initial step"]
-        self.dialogue_history = []        
+        self.dialogue_history = []
         self.gt_mask = gt_mask
         if self.gt_mask == True:
             self.detection_threshold = 5
         else:
             self.detection_threshold = 3
-            from detection import tdw_detection
+            from detection import init_detection
             # only here we need to use the detection model, other places we use the gt mask
             # so we put the import here
-            self.detection_model = tdw_detection()
+            self.detection_model = init_detection()
         self.navigation_threshold = 5
         print(self.rooms_name)
         self.LLM.reset(self.rooms_name, self.goal_objects)

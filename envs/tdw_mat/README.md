@@ -20,7 +20,9 @@
 
 ## Setup
 
-Run the following commands step by step to setup the environments:
+Run the following commands step by step to setup the default environments:
+
+**Note:** If you want to install the vision detection module, replace `requirements.txt` with `requirements_with_vision.txt` before running the following command.
 
 ```bash
 cd tdw_mat
@@ -34,10 +36,15 @@ After that, you can run the demo scene to verify your setup:
 ```bash
 python demo/demo_scene.py
 ```
+**Note:** If you want to install the vision detection module, please download our pretrained model [here](https://drive.google.com/file/d/1us2hpJj3_u1Ti_R0OrqVDgUQbdMPUaKN/view?usp=sharing) and put it into `detection_pipeline/`. To verify it, you can run:
+
+```bash
+python detection_pipeline/test_install.py
+```
 
 ## Run Experiments
 
-We prepare the example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `scripts`. For example, to run experiments with two LLM Agents, run the following command:
+We prepare the example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `scripts` and `scripts/wo_gt_mask`. For example, to run experiments with two LLM Agents, run the following command:
 
 ```bash
 ./scripts/test_LMs.sh

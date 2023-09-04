@@ -225,7 +225,7 @@ class TDW(Env):
         self.controller.communicate({"$type": "set_floorplan_roof",
                           "show": False})
         # Bright case, not support when not use gt mask    
-        if not self.gt_mask:
+        if self.gt_mask:
             self.controller.communicate({"$type": "add_hdri_skybox", "name": "sky_white", "url": "https://tdw-public.s3.amazonaws.com/hdri_skyboxes/linux/2019.1/sky_white", "exposure": 2, "initial_skybox_rotation": 0, "sun_elevation": 90, "sun_initial_angle": 0, "sun_intensity": 1.25})
             
         # Set the field of view of the agent.
