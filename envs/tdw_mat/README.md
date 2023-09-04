@@ -22,7 +22,7 @@
 
 Run the following commands step by step to setup the default environments:
 
-**Note:** If you want to install the vision detection module, replace `requirements.txt` with `requirements_with_vision.txt` before running the following command.
+*For vision detection module:* If you want to install the vision detection module, replace `requirements.txt` with `requirements_with_vision.txt` before running the following command.
 
 ```bash
 cd tdw_mat
@@ -35,11 +35,6 @@ After that, you can run the demo scene to verify your setup:
 
 ```bash
 python demo/demo_scene.py
-```
-**Note:** If you want to install the vision detection module, please download our pretrained model [here](https://drive.google.com/file/d/1us2hpJj3_u1Ti_R0OrqVDgUQbdMPUaKN/view?usp=sharing) and put it into `detection_pipeline/`. To verify it, you can run:
-
-```bash
-python detection_pipeline/test_install.py
 ```
 
 ## Run Experiments
@@ -56,9 +51,15 @@ Download `transport challenge asset bundles`: Commonly it is automatically downl
 
 Besides use ground truth segmentation mask in `TDW_MAT`, we also have `no-gt-mask` mode. Here you need to train a segmentation model by your own.
 
-By add `--no_gt_mask` in the scripts, the env will not provide ground truth segmentation mask anymore, and thus the agents need to detect them. 
+We finetune a Resnet model as our detection baseline, which is based on `mmdetection`. You can download the model weight [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you want to use it, put it in `detection_pipeline/` folder (where you can also find the `config` file). 
 
-We finetune a Resnet model as our detection baseline, which is based on `mmdetection`. You can download the config and the model weight [here](https://drive.google.com/drive/folders/1hx7xDn-dmTWDwuI-fFgyxQaaKkA_vofB?usp=sharing). If you want to use it, put it in `detection pipeline` folder and add `--no_gt_mask` into scripts.
+To test the installation of our detection model, you can run:
+
+```bash
+python detection_pipeline/test_install.py
+```
+
+By add `--no_gt_mask` in the scripts, the env will not provide ground truth segmentation mask anymore, and thus the agents need to detect them. 
 
 ## More details on the environment
 
