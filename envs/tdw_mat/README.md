@@ -31,6 +31,8 @@ conda activate tdw_mat
 pip3 install -e .
 ```
 
+If you're running TDW on a remote Linux server, follow the [TDW Installation Document](https://github.com/threedworld-mit/tdw/blob/master/Documentation/lessons/setup/install.md) to configure the X server.
+
 After that, you can run the demo scene to verify your setup:
 
 ```bash
