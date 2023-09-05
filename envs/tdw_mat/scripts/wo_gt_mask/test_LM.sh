@@ -9,6 +9,7 @@ python3 tdw-gym/challenge.py \
 --max_tokens 256 \
 --cot \
 --data_prefix dataset/dataset_test/ \
---debug
+--debug \
+--no_gt_mask
 
 ps ux | grep port\ 1091 | awk {'print $2'} | xargs kill

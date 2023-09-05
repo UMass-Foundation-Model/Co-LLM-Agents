@@ -20,9 +20,11 @@
 
 ## Setup
 
-Run the following commands step by step to setup the environments:
+Run the following commands step by step to setup the default environments:
 
-```
+*For vision detection module:* If you want to install the vision detection module, replace `requirements.txt` with `requirements_with_vision.txt` before running the following command.
+
+```bash
 cd tdw_mat
 conda create -n tdw_mat python=3.9
 conda activate tdw_mat
@@ -31,18 +33,33 @@ pip3 install -e .
 
 After that, you can run the demo scene to verify your setup:
 
-```
+```bash
 python demo/demo_scene.py
 ```
 
 ## Run Experiments
 
-We prepare the example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `scripts`. For example, to run experiments with two LLM Agents, run the following command:
+We prepare the example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `scripts` and `scripts/wo_gt_mask`. For example, to run experiments with two LLM Agents, run the following command:
 
-
-```
+```bash
 ./scripts/test_LMs.sh
 ```
+
+Download `transport challenge asset bundles`: Commonly it is automatically downloaded when running the scripts. If you meet problem, you can download it [here](https://drive.google.com/file/d/1us2hpJj3_u1Ti_R0OrqVDgUQbdMPUaKN/view?usp=sharing), and unzip it in the `TDW_MAT` folder.
+
+## Detection Model
+
+Besides use ground truth segmentation mask in `TDW_MAT`, we also have `no-gt-mask` mode. Here you need to train a segmentation model by your own.
+
+We finetune a Resnet model as our detection baseline, which is based on `mmdetection`. You can download the model weight [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you want to use it, put it in `detection_pipeline/` folder (where you can also find the `config` file). 
+
+To test the installation of our detection model, you can run:
+
+```bash
+python detection_pipeline/test_install.py
+```
+
+By add `--no_gt_mask` in the scripts, the env will not provide ground truth segmentation mask anymore, and thus the agents need to detect them. 
 
 ## More details on the environment
 

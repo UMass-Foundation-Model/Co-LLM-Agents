@@ -15,16 +15,16 @@ from tdw.add_ons.third_person_camera import ThirdPersonCamera
 from tdw.add_ons.image_capture import ImageCapture
 from tdw.backend.paths import EXAMPLE_CONTROLLER_OUTPUT_PATH
 import time
-c = Controller(port=1072)
+c = Controller(port=1073)
 #logger = Logger('log.txt')
 #c.add_ons.extend([logger])
-camera = ThirdPersonCamera(position={"x": -5, "y": 4, "z": 0}, avatar_id="a", look_at={"x": 5, "y": -4, "z": 0})
+camera = ThirdPersonCamera(position={"x": -4, "y": 2, "z": 0}, avatar_id="a", look_at={"x": 0, "y": 2, "z": 0})
 c.add_ons.extend([camera])
 state = ChallengeState()
 commands = [TDWUtils.create_empty_room(12, 12),
             {"$type": "set_screen_size",
-             "width": 1024,
-             "height": 1024}]
+             "width": 256,
+             "height": 256}]
 object_ids = [Controller.get_unique_id(), Controller.get_unique_id(), Controller.get_unique_id(), Controller.get_unique_id(), Controller.get_unique_id(), Controller.get_unique_id()]
 commands.extend(Controller.get_add_physics_object(model_name="pencil_all",
                                                   position={"x": 0, "y": 0.15, "z": -0.5},
