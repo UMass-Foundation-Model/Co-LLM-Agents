@@ -39,6 +39,16 @@ After that, you can run the demo scene to verify your setup:
 python demo/demo_scene.py
 ```
 
+*For vision detection module:* If you want to install the vision detection module, please install `mmdetection`:
+```bash
+pip install torch torchvision torchaudio
+pip install -U openmim
+mim install mmengine
+mim install "mmcv>=2.0.0"
+mim install mmdet
+```
+If you meet trouble when install `mmdetection`, please refer to [here](https://mmdetection.readthedocs.io/en/latest/get_started.html) for detailed install guidance.
+
 ## Run Experiments
 
 We prepare the example scripts to run experiments with HP baseline and our Cooperative LLM Agent under the folder `scripts` and `scripts/wo_gt_mask`. For example, to run experiments with two LLM Agents, run the following command:
@@ -55,7 +65,7 @@ Besides use ground truth segmentation mask in `TDW_MAT`, we also have `no-gt-mas
 
 We finetune a Resnet model as our detection baseline, which is based on `mmdetection`. You can download the model weight [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you want to use it, put it in `detection_pipeline/` folder (where you can also find the `config` file). 
 
-To test the installation of our detection model, you can run:
+To test the installation of our detection model and the pretrained model, you can run:
 
 ```bash
 python detection_pipeline/test_install.py
