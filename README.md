@@ -105,8 +105,6 @@ The task goal is to satisfy all the given subgoals within $250$ time steps, and 
   - **Average Steps (L)**: Number of steps to finish the task;
   - **Efficiency Improvement (EI)**: The efficiency improvements of cooperating with base agents.
 
-For **observation space** and **action space**, please refer to [README](envs/cwah/README.md) in cwah for a detailed description.
-
 ### ThreeDWorld Multi-Agent Transport(TDW-MAT)
 
 We extend the [ThreeDWorld Transport Challenge](https://arxiv.org/abs/2103.14025) into a multi-agent setting with more types of objects and containers, more realistic object placements, and support communication between agents, named ThreeDWorld Multi-Agent Transport (TDW-MAT), built on top of the [TDW platform](https://www.threedworld.org/). 
@@ -129,8 +127,6 @@ One example of scenes, target objects, and containers is shown in the following 
 
   - **Transport Rate (TR)**: The fraction of the target objects successfully transported to the goal position.
   - **Efficiency Improvements (EI)**: The efficiency improvements of cooperating with base agents.
-
-For **observation space** and **action space**, please refer to [README](envs/tdw_mat/README.md) in tdw_mat for a detailed description.
 
 ## Interesting Cases
 
