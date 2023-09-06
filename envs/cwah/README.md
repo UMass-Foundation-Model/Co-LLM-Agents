@@ -54,7 +54,7 @@ For more details on the arguments, please refer to the scripts and `arguments.py
 
 Communicative Watch-And-Help(C-WAH) is an extension of the [Watch-And-Help challenge](https://github.com/xavierpuigf/watch_and_help), which enables agents to send messages to each other. Sending messages, alongside other actions, takes one timestep and has an upper limit on message length.
 
-#### Tasks 
+### Tasks 
 
 Five types of tasks are available in C-WAH, named `Prepare afternoon tea`, `Wash dishes`, `Prepare a meal`, `Put groceries`, and `Set up a dinner table`. These tasks include a range of housework, and each task contains a few subgoals, which are described by predicates. A predicate is in `ON/IN(x, y)` format, that is, `Put x ON/IN y`. The detailed descriptions of tasks are listed in the following table:
 
@@ -68,7 +68,7 @@ Five types of tasks are available in C-WAH, named `Prepare afternoon tea`, `Wash
 
 The task goal is to satisfy all the given subgoals within $250$ time steps, and the number of subgoals in each task ranges from $3$ to $5$. 
 
-#### Metrics
+### Metrics
 
   - **Average Steps (L)**: Number of steps to finish the task;
   - **Efficiency Improvement (EI)**: The efficiency improvements of cooperating with base agents.
