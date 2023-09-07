@@ -80,6 +80,54 @@ For example, to run experiments with two LLM Agents on Communicative Watch-And-H
 ./scripts/symbolic_obs_llm_llm.sh
 ```
 
+## Environment Details
+
+### Communicative Watch-And-Help(C-WAH)
+
+Communicative Watch-And-Help(C-WAH) is an extension of the [Watch-And-Help challenge](https://github.com/xavierpuigf/watch_and_help), which enables agents to send messages to each other. Sending messages, alongside other actions, takes one timestep and has an upper limit on message length.
+
+#### Tasks 
+
+Five types of tasks are available in C-WAH, named `Prepare afternoon tea`, `Wash dishes`, `Prepare a meal`, `Put groceries`, and `Set up a dinner table`. These tasks include a range of housework, and each task contains a few subgoals, which are described by predicates. A predicate is in `ON/IN(x, y)` format, that is, `Put x ON/IN y`. The detailed descriptions of tasks are listed in the following table:
+
+| Task Name | Predicate Set |
+| ------- | ------- |
+| Prepare afternoon tea   | ON(cupcake,coffeetable), ON(pudding,coffeetable), ON(apple,coffeetable), ON(juice,coffeetable), ON(wine,coffeetable)  |
+| Wash dishes  | IN(plate,dishwasher), IN(fork,dishwasher)  |
+| Prepare a meal | ON(coffeepot,dinnertable),ON(cupcake,dinnertable), ON(pancake,dinnertable), ON(poundcake,dinnertable), ON(pudding,dinnertable), ON(apple,dinnertable), ON(juice,dinnertable), ON(wine,dinnertable) |
+|Put groceries | IN(cupcake,fridge), IN(pancake,fridge), IN(poundcake,fridge), IN(pudding,fridge), IN(apple,fridge), IN(juice,fridge), IN(wine,fridge) |
+|Set up a dinner table | ON(plate,dinnertable), ON(fork,dinnertable) |
+
+The task goal is to satisfy all the given subgoals within $250$ time steps, and the number of subgoals in each task ranges from $3$ to $5$. 
+
+#### Metrics
+
+  - **Average Steps (L)**: Number of steps to finish the task;
+  - **Efficiency Improvement (EI)**: The efficiency improvements of cooperating with base agents.
+
+### ThreeDWorld Multi-Agent Transport(TDW-MAT)
+
+We extend the [ThreeDWorld Transport Challenge](https://arxiv.org/abs/2103.14025) into a multi-agent setting with more types of objects and containers, more realistic object placements, and support communication between agents, named ThreeDWorld Multi-Agent Transport (TDW-MAT), built on top of the [TDW platform](https://www.threedworld.org/). 
+
+The agents are tasked to transport as many target objects as possible to the goal position with the help of containers as tools. One container can carry most three objects, and without containers, the agent can transport only two objects at a time. The agents have the ego-centric visual observation and action space as before with a new communication action added.
+
+#### Tasks 
+
+We selected $6$ scenes from the TDW-House dataset and sampled $2$ types of tasks and $2$ settings in each of the scenes, making a test set of $24$ episodes. Every scene has $6$ to $8$ rooms, $10$ objects, and a few containers. An episode is terminated if all the target objects have been transported to the goal position or the maximum number of frames ($3000$) is reached. 
+
+The tasks are named `food task` and `stuff task`. Containers for the `food task` can be found in both the kitchen and living room, while containers for the `stuff task` can be found in the living room and office. 
+
+The configuration and distribution of containers vary based on two distinct settings: the `Enough Container Setting` and the `Rare Container Setting`. In the `Enough Container Setting`, the ratio of containers to objects stands at $1:2$, and containers associated with a specific task are located in no more than two rooms. On the other hand, in the `Rare Container Setting`, the container-to-object ratio decreases to $1:5$. This distribution differs from the "Enough Container Setting" as containers in the `Rare Container Setting` are strictly localized to a single room. 
+
+One example of scenes, target objects, and containers is shown in the following image:
+
+![task_description_tdw](assets/task_description_tdw.png)
+
+#### Metrics
+
+  - **Transport Rate (TR)**: The fraction of the target objects successfully transported to the goal position.
+  - **Efficiency Improvements (EI)**: The efficiency improvements of cooperating with base agents.
+
 ## Interesting Cases
 
 We noticed many interesting agents' behaviors exhibited in our experiments and identified several cooperative behaviors.
