@@ -163,3 +163,4 @@ detection_pipeline/epoch_1.pth
 detection_pipeline/mmdetection/
 detection_pipeline/demo/
 captured*/
+nohup.out
