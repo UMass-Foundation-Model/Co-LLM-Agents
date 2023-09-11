@@ -77,6 +77,8 @@ class TransportChallenge(Controller):
         if logger_dir is not None:
             self.logger = Logger(path=os.path.join(logger_dir, "action_log.log"))
             self.add_ons.append(self.logger)
+        else:
+            self.logger = None
         self._image_frequency: ImageFrequency = image_frequency
         """:field
         A dictionary of all Replicants in the scene. Key = The Replicant ID. Value = [`ReplicantTransportChallenge`](replicant_transport_challenge.md).
@@ -220,7 +222,8 @@ class TransportChallenge(Controller):
         self.communicate(scene)
         self.state = ChallengeState()
         self.add_ons.clear() # Clear the add-ons.
-        self.add_ons.append(self.logger)
+        if self.logger is not None:
+            self.add_ons.append(self.logger)
         self.replicants.clear()
         # Add an occupancy map.
         self.add_ons.append(self.occupancy_map)

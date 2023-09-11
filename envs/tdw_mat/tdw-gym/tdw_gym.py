@@ -28,7 +28,7 @@ from functools import partial
 
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
-                        screen_size = 256, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
+                        screen_size = 512, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
         self.data_prefix = data_prefix
         self.replicant_colors = None
         self.replicant_ids = None
@@ -232,8 +232,8 @@ class TDW(Env):
         if self.gt_mask:
             for replicant_id in self.controller.replicants:
                 self.controller.communicate({"$type": "set_field_of_view",
-                              "avatar_id" : str(replicant_id), "field_of_view" : 120})
-            self.fov = 120
+                              "avatar_id" : str(replicant_id), "field_of_view" : 90})
+            self.fov = 90
         # Since detection model is trained in normal FOV, we need to change the FOV to normal
         else: self.fov = 54.43223
         
