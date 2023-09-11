@@ -6,7 +6,7 @@ readme = Path('README.md').read_text(encoding='utf-8')
 # Replace relative markdown links with absolute https links.
 readme = re.sub(r'\[(.*?)\]\(doc/(.*?)\)', r'[\1][https://github.com/alters-mit/transport_challenge_multi_agent/blob/main/doc/\2]', readme)
 
-with open('requirements.txt') as f:
+with open('requirements_with_vision.txt') as f:
     required = f.read().splitlines()
 
 setup(
