@@ -21,7 +21,7 @@ gym.envs.registration.register(
 )
 
 class Challenge:
-    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 256, data_prefix = 'dataset/nips_dataset/', gt_mask = True):
+    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 512, data_prefix = 'dataset/nips_dataset/', gt_mask = True):
         self.env = gym.make("transport_challenge_MA", port = port, number_of_agents = number_of_agents, save_dir = output_dir, max_frames = max_frames, new_setting = new_setting, screen_size = screen_size, data_prefix = data_prefix, gt_mask = gt_mask)
         self.gt_mask = gt_mask
         self.logger = logger
@@ -151,7 +151,7 @@ def main():
     parser.add_argument("--logprobs", default=1, type=int)
     parser.add_argument("--cot", action='store_true', help="use chain-of-thought prompt")
     parser.add_argument("--echo", action='store_true', help="to include prompt in the outputs")
-    parser.add_argument("--screen_size", default=256, type=int)
+    parser.add_argument("--screen_size", default=512, type=int)
     args = parser.parse_args()
 
     args.number_of_agents = len(args.agents)
@@ -160,7 +160,7 @@ def main():
     if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
     logger = init_logs(args.output_dir)
 
-    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask)
+    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size)
     agents = []
     for i, agent in enumerate(args.agents):
         if agent == 'h_agent':
