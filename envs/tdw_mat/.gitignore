@@ -153,7 +153,6 @@ outputs/
 scene_outputs/
 replay/
 replay_imgs/
-results/
 other_result/
 backup/
 LLM/chat_raw.json

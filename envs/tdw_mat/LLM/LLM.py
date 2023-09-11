@@ -6,7 +6,9 @@ import os
 import pandas as pd
 from openai.error import OpenAIError
 import backoff
-
+import torch
+from tqdm import tqdm
+from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM
 
 class LLM:
 	def __init__(self,
@@ -38,6 +40,8 @@ class LLM:
 		self.communication = communication
 		self.cot = cot
 		self.source = source
+		self.model = None
+		self.tokenizer = None
 		self.lm_id = lm_id
 		self.chat = 'gpt-3.5-turbo' in lm_id or 'gpt-4' in lm_id
 		self.OPENAI_KEY = None
@@ -61,51 +65,83 @@ class LLM:
 					"logprobs": sampling_parameters.logprobs,
 					"echo": sampling_parameters.echo,
 				}
+		elif self.source == 'hf':
+			self.tokenizer = AutoTokenizer.from_pretrained(self.lm_id, use_fast=False, cache_dir='/mnt/gluster/home/chenpeihao/Projects/Co-LLM-Agents')
+			self.model = AutoModelForCausalLM.from_pretrained(self.lm_id, torch_dtype=torch.float16, device_map='auto', cache_dir='/mnt/gluster/home/chenpeihao/Projects/Co-LLM-Agents')
+			self.sampling_params = {
+				"max_new_tokens": sampling_parameters.max_tokens,
+				"temperature": sampling_parameters.t,
+				"top_p": sampling_parameters.top_p,
+				"num_return_sequences": sampling_parameters.n,
+				'use_cache': True,
+				# 'output_scores': True,
+				'return_dict_in_generate': True,
+				'do_sample': True,
+				# 'early_stopping': True,
+			}
 		else:
 			raise ValueError("invalid source")
 
 		def lm_engine(source, lm_id):
+
 			@backoff.on_exception(backoff.expo, OpenAIError)
+			def openai_generate(prompt, sampling_params):
+				usage = 0
+				try:
+					if self.chat:
+						response = openai.ChatCompletion.create(
+							model=lm_id, messages=prompt, **sampling_params
+						)
+						# print(json.dumps(response, indent=4))
+						if self.debug:
+							with open(f"LLM/chat_raw.json", 'a') as f:
+								f.write(json.dumps(response, indent=4))
+								f.write('\n')
+						generated_samples = [response['choices'][i]['message']['content'] for i in
+											 range(sampling_params['n'])]
+						if 'gpt-4' in self.lm_id:
+							usage = response['usage']['prompt_tokens'] * 0.03 / 1000 + response['usage']['completion_tokens'] * 0.06 / 1000
+						elif 'gpt-3.5' in self.lm_id:
+							usage = response['usage']['total_tokens'] * 0.002 / 1000
+					# mean_log_probs = [np.mean(response['choices'][i]['logprobs']['token_logprobs']) for i in
+					# 				  range(sampling_params['n'])]
+					elif "text-" in lm_id:
+						response = openai.Completion.create(model=lm_id, prompt=prompt, **sampling_params)
+						# print(json.dumps(response, indent=4))
+						if self.debug:
+							with open(f"LLM/raw.json", 'a') as f:
+								f.write(json.dumps(response, indent=4))
+								f.write('\n')
+						generated_samples = [response['choices'][i]['text'] for i in range(sampling_params['n'])]
+					# mean_log_probs = [np.mean(response['choices'][i]['logprobs']['token_logprobs']) for i in
+					# 			  range(sampling_params['n'])]
+					else:
+						raise ValueError(f"{lm_id} not available!")
+				except OpenAIError as e:
+					print(e)
+					raise e
+				return generated_samples, usage
+
+			@torch.inference_mode()
+			def hf_generate(prompt, sampling_params):
+				input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to('cuda')
+				prompt_len = input_ids.shape[-1]
+				print(sampling_params)
+				output_dict = self.model.generate(input_ids, # max_length=prompt_len + sampling_params['max_new_tokens'],
+											 **sampling_params)
+				generated_samples = self.tokenizer.batch_decode(output_dict.sequences[:, prompt_len:])
+				print(generated_samples)
+				generated_samples = [s.strip() for s in generated_samples]
+				return generated_samples, 0
+
 			def _generate(prompt, sampling_params):
 				usage = 0
 				if source == 'openai':
-					try:
-						if self.chat:
-							response = openai.ChatCompletion.create(
-								model=lm_id, messages=prompt, **sampling_params
-							)
-							# print(json.dumps(response, indent=4))
-							if self.debug:
-								with open(f"LLM/chat_raw.json", 'a') as f:
-									f.write(json.dumps(response, indent=4))
-									f.write('\n')
-							generated_samples = [response['choices'][i]['message']['content'] for i in
-												 range(sampling_params['n'])]
-							if 'gpt-4' in self.lm_id:
-								usage = response['usage']['prompt_tokens'] * 0.03 / 1000 + response['usage']['completion_tokens'] * 0.06 / 1000
-							elif 'gpt-3.5' in self.lm_id:
-								usage = response['usage']['total_tokens'] * 0.002 / 1000
-						# mean_log_probs = [np.mean(response['choices'][i]['logprobs']['token_logprobs']) for i in
-						# 				  range(sampling_params['n'])]
-						elif "text-" in lm_id:
-							response = openai.Completion.create(model=lm_id, prompt=prompt, **sampling_params)
-							# print(json.dumps(response, indent=4))
-							if self.debug:
-								with open(f"LLM/raw.json", 'a') as f:
-									f.write(json.dumps(response, indent=4))
-									f.write('\n')
-							generated_samples = [response['choices'][i]['text'] for i in range(sampling_params['n'])]
-						# mean_log_probs = [np.mean(response['choices'][i]['logprobs']['token_logprobs']) for i in
-						# 			  range(sampling_params['n'])]
-						else:
-							raise ValueError(f"{lm_id} not available!")
-					except OpenAIError as e:
-						print(e)
-						raise e
+					return openai_generate(prompt, sampling_params)
+				elif self.source == 'hf':
+					return hf_generate(prompt, sampling_params)
 				else:
 					raise ValueError("invalid source")
-				# generated_samples = [sample.strip().lower() for sample in generated_samples]
-				return generated_samples, usage
 
 			return _generate
 

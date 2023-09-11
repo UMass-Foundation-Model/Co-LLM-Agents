@@ -125,7 +125,7 @@ def init_logs(output_dir, name = 'simple_example'):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, default="results")
-    parser.add_argument("--run_id", type=int, default=0)
+    parser.add_argument("--run_id", type=str, default='try')
     parser.add_argument("--data_path", type=str, default="test_env.json")
     parser.add_argument("--data_prefix", type=str, default="dataset/arxiv_dataset_v3/")
     parser.add_argument("--port", default=1071, type=int)
@@ -138,7 +138,7 @@ def main():
     parser.add_argument("--no_gt_mask", action='store_true')
     # LLM parameters
     parser.add_argument('--source', default='openai',
-        choices=['huggingface', 'openai'],
+        choices=['hf', 'openai'],
         help='openai API or load huggingface models')
     parser.add_argument('--lm_id', default='gpt-3.5-turbo',
                         help='name for openai engine or huggingface model name/path')
@@ -156,7 +156,7 @@ def main():
 
     args.number_of_agents = len(args.agents)
     if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
-    args.output_dir = os.path.join(args.output_dir, str(args.run_id))
+    args.output_dir = os.path.join(args.output_dir, args.run_id)
     if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
     logger = init_logs(args.output_dir)
 
