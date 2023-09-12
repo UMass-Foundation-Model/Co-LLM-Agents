@@ -12,6 +12,7 @@ python3 tdw-gym/challenge.py \
 --max_tokens 256 \
 --cot \
 --data_prefix dataset/dataset_test/ \
+--screen_size 256 \
 --debug
 
 pkill -f -9 "port $port"

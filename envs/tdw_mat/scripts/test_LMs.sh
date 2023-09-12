@@ -11,6 +11,7 @@ python3 tdw-gym/challenge.py \
 --max_tokens 256 \
 --cot \
 --data_prefix dataset/dataset_test/ \
+--screen_size 256 \
 --debug
 
 ps ux | grep port\ 2087 | awk {'print $2'} | xargs kill
