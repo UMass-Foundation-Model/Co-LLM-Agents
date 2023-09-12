@@ -164,3 +164,4 @@ detection_pipeline/mmdetection/
 detection_pipeline/demo/
 captured*/
 nohup.out
+*.avi
