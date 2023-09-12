@@ -1,5 +1,5 @@
-lm_id=Llama-2-13b-hf
-port=1091
+lm_id=Llama-2-70b-hf
+port=10791
 pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
@@ -8,7 +8,7 @@ python3 tdw-gym/challenge.py \
 --port $port \
 --agents lm_agent \
 --source hf \
---lm_id /mnt/nfs/share/Llama/Llama-2-13b-hf \
+--lm_id /mnt/nfs/share/Llama/$lm_id \
 --max_tokens 256 \
 --cot \
 --data_prefix dataset/dataset_test/ \

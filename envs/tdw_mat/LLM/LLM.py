@@ -66,8 +66,8 @@ class LLM:
 					"echo": sampling_parameters.echo,
 				}
 		elif self.source == 'hf':
-			self.tokenizer = AutoTokenizer.from_pretrained(self.lm_id, use_fast=False, cache_dir='/mnt/gluster/home/chenpeihao/Projects/Co-LLM-Agents')
-			self.model = AutoModelForCausalLM.from_pretrained(self.lm_id, torch_dtype=torch.float16, device_map='auto', cache_dir='/mnt/gluster/home/chenpeihao/Projects/Co-LLM-Agents')
+			self.tokenizer = AutoTokenizer.from_pretrained(self.lm_id, use_fast=True)
+			self.model = AutoModelForCausalLM.from_pretrained(self.lm_id, device_map='auto', load_in_4bit=True)
 			self.sampling_params = {
 				"max_new_tokens": sampling_parameters.max_tokens,
 				"temperature": sampling_parameters.t,
