@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 import openai
 import json
@@ -122,16 +123,60 @@ class LLM:
 					raise e
 				return generated_samples, usage
 
+			def tokenize_dialog(dialog):
+				B_INST, E_INST = "[INST]", "[/INST]"
+				B_SYS, E_SYS = "<<SYS>>\n", "\n<</SYS>>\n\n"
+				prompt_tokens = []
+				# print(dialog)
+				if dialog[0]["role"] == "system":
+					dialog = [
+								 {
+									 "role": dialog[1]["role"],
+									 "content": B_SYS
+												+ dialog[0]["content"]
+												+ E_SYS
+												+ dialog[1]["content"],
+								 }
+							 ] + dialog[2:]
+				assert all([msg["role"] == "user" for msg in dialog[::2]]) and all(
+					[msg["role"] == "assistant" for msg in dialog[1::2]]
+				), (
+					"model only supports 'system', 'user' and 'assistant' roles, "
+					"starting with 'system', then 'user' and alternating (u/a/u/a/u...)"
+				)
+				dialog_tokens: List[int] = sum(
+					[
+						[self.tokenizer.bos_token_id] +
+						self.tokenizer.encode(
+							f"{B_INST} {(prompt['content']).strip()} {E_INST} {(answer['content']).strip()} ",
+							add_special_tokens=False
+						)
+						+ [self.tokenizer.eos_token_id]
+						for prompt, answer in zip(dialog[::2], dialog[1::2], )
+					],
+					[],
+				)
+				assert (
+						dialog[-1]["role"] == "user"
+				), f"Last message must be from user, got {dialog[-1]['role']}"
+				dialog_tokens += [self.tokenizer.bos_token_id] + self.tokenizer.encode(
+					f"{B_INST} {(dialog[-1]['content']).strip()} {E_INST}", add_special_tokens=False
+				)
+				prompt_tokens.append(dialog_tokens)
+				return torch.tensor(prompt_tokens).to('cuda')
 			@torch.inference_mode()
 			def hf_generate(prompt, sampling_params):
-				input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to('cuda')
+				if self.chat:
+					input_ids = tokenize_dialog(prompt)
+				else:
+					input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to('cuda')
 				prompt_len = input_ids.shape[-1]
-				print(sampling_params)
 				output_dict = self.model.generate(input_ids, # max_length=prompt_len + sampling_params['max_new_tokens'],
 											 **sampling_params)
 				generated_samples = self.tokenizer.batch_decode(output_dict.sequences[:, prompt_len:])
-				print(generated_samples)
 				generated_samples = [s.strip() for s in generated_samples]
+				if self.debug:
+					print(generated_samples)
 				return generated_samples, 0
 
 			def _generate(prompt, sampling_params):
@@ -169,18 +214,25 @@ class LLM:
 
 
 	def parse_answer(self, available_actions, text):
+		flags = 'AC'
 		for i in range(len(available_actions)):
 			action = available_actions[i]
 			if action in text:
-				return action
+				return action, flags
+		sents = text.split('\n')  # Split by space
+		words = []
+		for sent in sents:
+			words.extend(sent.split(' '))
+		words = list(filter(None, words))  # Remove empty strings from the result
 
 		for i in range(len(available_actions)):
 			action = available_actions[i]
 			option = chr(ord('A') + i)
 			# txt = text.lower()
-			if f"option {option}" in text or f"{option}." in text.split(' ') or f"{option}," in text.split(' ') or f"Option {option}" in text or f"({option})" in text or f"action {option}" in text or (len(text) <= 2 and option in text):
-				return action
+			if f"option {option}" in text or f"{option}." in words or f"{option}," in words or f"{option}\n" in text.split(" ") or f"Option {option}" in text or f"({option})" in words or f"action {option}" in text or (len(text) <= 2 and option in text):
+				return action, flags
 		print("WARNING! Fuzzy match!")
+		flags = "Fuzzy match"
 		for i in range(len(available_actions)):
 			action = available_actions[i]
 			if self.communication and i == 0:
@@ -206,13 +258,14 @@ class LLM:
 				act = 'transport'
 			option = chr(ord('A') + i)
 			if f"{option} " in text or act in text or name in text or id in text:
-				return action
+				return action, flags
 		if len(text) == 1:
 			i = ord(text) - ord('A')
 			if i in range(len(available_actions)):
 				return available_actions[i]
 		print("WARNING! No available action parsed!!! Random choose one")
-		return random.choice(available_actions)
+		flags = "failed to parse"
+		return random.choice(available_actions), flags
 
 
 	def progress2text(self, current_step, satisfied, opponent_grabbed_objects, opponent_last_room,):
@@ -447,36 +500,45 @@ class LLM:
 			chat_prompt = [{"role": "user", "content": prompt}]
 			outputs, usage = self.generator(chat_prompt if self.chat else prompt, self.sampling_params)
 			output = outputs[0]
+			## truncate the unfinished cot
+			last_index = output.rfind('.')
+			if last_index != -1:
+				output = output[:last_index + 1]
+			else:
+				output += '.'
 			self.total_cost += usage
-			info['cot_outputs'] = outputs
-			info['cot_usage'] = usage
+			# info['outputs_cot'] = outputs
+			info['usage_step_1'] = usage
 			if self.debug:
 				print(f"cot_output:\n{output}")
 			chat_prompt = [{"role": "user", "content": prompt},
 						   {"role": "assistant", "content": output},
 						   {"role": "user", "content": "Answer with only one best next action. So the answer is option"}]
-			normal_prompt = prompt + output + ' So the answer is'
+			normal_prompt = prompt + output + ' So the answer is option'
 			outputs, usage = self.generator(chat_prompt if self.chat else normal_prompt, self.sampling_params)
 			output = outputs[0]
 			self.total_cost += usage
-			info['output_usage'] = usage
+			info['usage_step_2'] = usage
 			if self.debug:
 				print(f"base_output:\n{output}")
 				print(f"total cost: {self.total_cost}")
 		else:
+			normal_prompt = prompt
+			chat_prompt = [{"role": "user", "content": prompt}]
 			if self.debug:
 				print(f"base_prompt:\n{prompt}")
-			outputs, usage = self.generator([{"role": "user", "content": prompt}] if self.chat else prompt, self.sampling_params)
+			outputs, usage = self.generator(chat_prompt if self.chat else normal_prompt, self.sampling_params)
 			output = outputs[0]
-			info['cot_usage'] = usage
+			info['usage_step_1'] = usage
 			if self.debug:
 				print(f"base_output:\n{output}")
-		plan = self.parse_answer(available_plans_list, output)
+		plan, flags = self.parse_answer(available_plans_list, output)
 		if self.debug:
 			print(f"plan: {plan}\n")
 		info.update({"num_available_actions": num,
-					 "prompts": prompt,
-					 "outputs": outputs,
+					 "prompt": normal_prompt,
+					 "output": output,
+					 "parse_exception": flags,
 					 "plan": plan,
 					 "total_cost": self.total_cost})
 		return plan, info
