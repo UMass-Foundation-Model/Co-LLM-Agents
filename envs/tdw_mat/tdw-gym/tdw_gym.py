@@ -25,6 +25,24 @@ from PIL import Image
 import json
 import pickle
 from functools import partial
+import signal
+from tenacity import retry, wait_fixed, retry_if_exception_type
+
+class TimeoutException(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise TimeoutException("Function execution exceeded the timeout limit")
+
+@retry(wait=wait_fixed(5), retry=retry_if_exception_type(TimeoutException))  # wait 5 seconds between retries
+def might_fail_launch(launch):
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(15)  
+    try:
+        print("Trying to launch tdw ...")
+        return launch()
+    finally:
+        signal.alarm(0)  
 
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
@@ -62,7 +80,6 @@ class TDW(Env):
         self.new_setting = new_setting
         self.controller = None
         self.message_per_frame = 500
-        print("Controller connected")
         rgb_space = gym.spaces.Box(0, 256,
                                  (3,
                                   self.screen_size,
@@ -185,8 +202,8 @@ class TDW(Env):
         if self.controller is not None:
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
-        self.controller = TransportChallenge(port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,
-                 screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir)
+        self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir))
+        print("Controller connected")
         self.success = False
         self.messages = [None for _ in range(self.number_of_agents)]
         self.reward = 0
@@ -224,6 +241,7 @@ class TDW(Env):
             self.occupancy_map.generate(cell_size=0.125, once = False)
         self.controller.communicate({"$type": "set_floorplan_roof",
                           "show": False})
+
         # Bright case, not support when not use gt mask    
         if self.gt_mask:
             self.controller.communicate({"$type": "add_hdri_skybox", "name": "sky_white", "url": "https://tdw-public.s3.amazonaws.com/hdri_skyboxes/linux/2019.1/sky_white", "exposure": 2, "initial_skybox_rotation": 0, "sun_elevation": 90, "sun_initial_angle": 0, "sun_intensity": 1.25})
@@ -427,13 +445,9 @@ class TDW(Env):
         
         for seg in seg_counter:
             if seg == (0, 0, 0): continue
-            #print(seg_counter[seg] / np.sum(mask))
-            #print('seg_color:', seg)
-            #print('name:', name)
             if seg_counter[seg] / np.sum(mask) > 0.5:
                 for i in range(len(self.obs[str(agent_id)]['visible_objects'])):
                     if self.obs[str(agent_id)]['visible_objects'][i]['seg_color'] == seg:
-                        #print(self.obs[str(agent_id)]['visible_objects'][i])
                         return self.obs[str(agent_id)]['visible_objects'][i]
         return {
                     'id': None,
@@ -443,7 +457,6 @@ class TDW(Env):
                 }
 
     def get_obs(self):
-        #upd containment:
         for x in self.controller.state.containment.keys():
             if x not in self.containment_all.keys():
                 self.containment_all[x] = []
@@ -752,21 +765,17 @@ class TDW(Env):
         '''
         save images of current step, including rgb, depth and segmentation image
         '''
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
+        os.makedirs(save_dir, exist_ok=True)
         for replicant_id in self.controller.replicants:
             save_path = os.path.join(save_dir, str(replicant_id))
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
+            os.makedirs(save_path, exist_ok=True)
             img = self.controller.replicants[replicant_id].dynamic.get_pil_image('img')
-            img.save(os.path.join(save_path, f'{self.num_step}_{self.num_frames}.png'))
-            depth = np.flip(np.array(TDWUtils.get_depth_values(self.controller.replicants[replicant_id].dynamic.get_pil_image('depth'), \
-                        width = self.screen_size,
-                        height = self.screen_size), dtype = np.float32), 0)
+            depth = np.flip(np.array(TDWUtils.get_depth_values(self.controller.replicants[replicant_id].dynamic.get_pil_image('depth'), width = self.screen_size, height = self.screen_size), dtype = np.float32), 0)
             depth_img = Image.fromarray(100 / depth).convert('RGB')
-            depth_img.save(os.path.join(save_path, f'{self.num_step}_{self.num_frames}_depth.png'))
             seg = self.controller.replicants[replicant_id].dynamic.get_pil_image('id')
-            seg.save(os.path.join(save_path, f'{self.num_step}_{self.num_frames}_seg.png'))
+            img.save(os.path.join(save_path, f'{self.num_step:04}_{self.num_frames:04}.png'))
+            seg.save(os.path.join(save_path, f'{self.num_step:04}_{self.num_frames:04}_seg.png'))
+            depth_img.save(os.path.join(save_path, f'{self.num_step:04}_{self.num_frames:04}_depth.png'))
 
     def close(self):
         print('close')
