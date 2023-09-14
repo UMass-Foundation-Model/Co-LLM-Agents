@@ -1,45 +1,63 @@
 import os
+import re
 from numpy import array
-# open a log, extract llm cot_output and plan.
-logger_path = 'results/4002/output.log'
-output_path = 'results/4002/output.txt'
-output_filter_path = 'results/4002/output_filter.txt'
+from collections import defaultdict
+import pandas as pd
+# Extract LLM prompts and outputs from log files.
+log_dir = 'results/LMs-vision-nips'
+log_path = os.path.join(log_dir, 'output.log')
+output_path = os.path.join(log_dir, 'LLM_data.csv')
 
-if not os.path.exists(output_path):
-    with open(logger_path, 'r') as f:
-        log = f.readlines()
-        for l in log:
-            if 'cot_output' in l or ('Episode: ' in l and '/12' in l):
-                with open(output_path, 'a') as ff:
-                    ff.write(l)
+# if not os.path.exists(output_path):
+#     with open(logger_path, 'r') as f:
+#         log = f.readlines()
+#         for l in log:
+#             if 'cot_output' in l or ('Episode: ' in l and '/12' in l):
+#                 with open(output_path, 'a') as ff:
+#                     ff.write(l)
+LLM_data = defaultdict(list)
 
-if not os.path.exists(output_filter_path):
-    with open(output_path, 'r') as f:
-        log = f.readlines()
-        for l in log:
-            len_text = len(l)
-            if len_text > 100:
-                len_text = 100
-            if 'DEBUG' not in l[:len_text]:
-#                continue
-                with open(output_filter_path, 'a') as ff:
-                    ff.write(l)
-            else:
-                pure_text = l[l.find('{'):]
-#                print('pure_text:', pure_text)
-                agent_name = eval(pure_text)['LLM']['prompts'][4 :eval(pure_text)['LLM']['prompts'].find('. ')]
-                print(agent_name)
-                llm_output = eval(pure_text)['LLM']
-                if 'cot_outputs' not in llm_output:
-                    cot_out = '[]'
-                else:
-                    cot_out = llm_output['cot_outputs']
-                if 'plan' not in llm_output:
-                    plan = 'None'
-                else:
-                    plan = llm_output['plan']
-                find_frame_str = llm_output['prompts'][: llm_output['prompts'].find('3000', llm_output['prompts'].find('3000') + 1)]
-                find_frame_str = find_frame_str[find_frame_str.find(' ', -6) + 1: -1]
-                with open(output_filter_path, 'a') as ff:
-                    ff.write('frame: ' + str(find_frame_str) + ', Agent: ' + agent_name + ', cot_output: ' + str(cot_out) + ', plan: ' + str(plan) + '\n')
-    
+with open(log_path, 'r') as f:
+    log = f.readlines()
+    episode = 1
+    for l in log:
+        len_text = len(l)
+        if len_text > 100:
+            len_text = 100
+        if 'DEBUG' not in l[:len_text]:
+            if 'Episode: ' in l and '/12' in l:
+                episode = int(re.search(r'Episode: (\d+)/\d+', l).group(1))
+            continue
+            # with open(output_path, 'a') as ff:
+            #     ff.write(l)
+        else:
+            if "'LLM'" not in l:
+                continue
+            pure_text = l[l.find('{'):]
+            llm_output = eval(pure_text)['LLM']
+            agent_name = llm_output['prompts'][4:llm_output['prompts'].find('. ')]
+            # print(agent_name)
+            LLM_data['episode'].append(episode)
+            LLM_data['agent'].append(agent_name)
+
+            LLM_data['prompt'].append(llm_output['prompts'])
+            LLM_data['output_plan_stage_1'].append(llm_output['cot_outputs'][0])
+            LLM_data['output_plan_stage_2'].append(llm_output['outputs'][0])
+            # print(llm_output)
+            LLM_data['output_comm'].append(llm_output['message_generator_outputs'][0] if 'message_generator_outputs' in llm_output else "")
+            LLM_data['output_parse_results'].append(llm_output['plan'])
+    df =pd.DataFrame(LLM_data)
+    # print(df)
+    df.to_csv(output_path)
+            # if 'cot_outputs' not in llm_output:
+            #     cot_out = ''
+            # else:
+            #     cot_out = llm_output['cot_outputs'][0]
+            # if 'plan' not in llm_output:
+            #     plan = 'None'
+            # else:
+            #     plan = llm_output['plan']
+            # find_frame_str = llm_output['prompts'][: llm_output['prompts'].find('3000', llm_output['prompts'].find('3000') + 1)]
+            # find_frame_str = find_frame_str[find_frame_str.find(' ', -6) + 1: -1]
+            # with open(output_path, 'a') as ff:
+            #     ff.write('frame: ' + str(find_frame_str) + ', Agent: ' + agent_name + ', cot_output: ' + str(cot_out) + ', plan: ' + str(plan) + '\n')
