@@ -262,8 +262,8 @@ class lm_agent:
                 if self.color2id_fc(tuple(self.obs['seg_mask'][i, j])) in self.with_character:
                     filter_depth[i, j] = 1e9
         depth = filter_depth
-        depth_img = Image.fromarray(100 / depth).convert('RGB')
-        depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.steps}_depth_filter.png')
+        #depth_img = Image.fromarray(100 / depth).convert('RGB')
+        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.steps}_depth_filter.png')
 
         #camera info
         FOV = self.obs['FOV']

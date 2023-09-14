@@ -202,8 +202,8 @@ class H_agent:
                 if self.color2id_fc(tuple(self.obs['seg_mask'][i, j])) in self.with_character:
                     filter_depth[i, j] = 1e9
         depth = filter_depth
-        depth_img = Image.fromarray(100 / depth).convert('RGB')
-        depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.num_step}_depth_filter.png')
+        #depth_img = Image.fromarray(100 / depth).convert('RGB')
+        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.num_step}_depth_filter.png')
 
         #camera info
         FOV = self.obs['FOV']
@@ -584,7 +584,7 @@ class H_agent:
         #rotate the map 90 degrees anti-clockwise
         draw_map = np.rot90(draw_map, 1)
         cv2.imwrite(previous_name + '_map.png', draw_map)
-        cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
+        #cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
 
     def detect(self):
         detect_result = self.detection_model(self.obs['rgb'])['predictions'][0]
@@ -628,7 +628,10 @@ class H_agent:
                 self.finish.append(obj)
                 self.object_map[np.where(self.id_map == obj)] = 0
                 self.id_map[np.where(self.id_map == obj)] = 0
-                
+
+        # save occupancy map:
+        self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.num_step - 1:04}_{self.obs["current_frames"]:04}')
+
         if self.obs['status'] == 0: # ongoing, only update the map, do not act.
             return {'type': 'ongoing'}
         if self.obs['valid'] == False: # invalid, the object is not there
@@ -639,9 +642,6 @@ class H_agent:
         self.get_object_list()
         if self.local_step % self.space_upd_freq == 0:
             self.local_occupancy_map = copy.deepcopy(self.occupancy_map)
-
-        # save occupancy map:
-        self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.num_step}')
 
         if self.keep_drop:
             if self.obs["held_objects"][0] is not None:

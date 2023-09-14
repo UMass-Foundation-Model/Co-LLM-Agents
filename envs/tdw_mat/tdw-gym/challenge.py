@@ -21,7 +21,7 @@ gym.envs.registration.register(
 )
 
 class Challenge:
-    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 512, data_prefix = 'dataset/nips_dataset/', gt_mask = True):
+    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 512, data_prefix = 'dataset/nips_dataset/', gt_mask = True, save_img = True):
         self.env = gym.make("transport_challenge_MA", port = port, number_of_agents = number_of_agents, save_dir = output_dir, max_frames = max_frames, new_setting = new_setting, screen_size = screen_size, data_prefix = data_prefix, gt_mask = gt_mask)
         self.gt_mask = gt_mask
         self.logger = logger
@@ -30,6 +30,7 @@ class Challenge:
         self.output_dir = output_dir
         self.max_frames = max_frames
         self.new_setting = new_setting
+        self.save_img = save_img
         if self.new_setting: self.data = json.load(open(os.path.join(data_prefix, data_path), "r"))
         else: self.data = pickle.load(open(os.path.join(data_prefix, data_path), "rb"))
         self.logger.info("done")
@@ -42,14 +43,17 @@ class Challenge:
             num_eval_episodes = eval_episodes
         
         start = time.time()
+        results = {}
         for i in range(num_eval_episodes):
             start_time = time.time()
             if os.path.exists(os.path.join(self.output_dir, str(i), 'result_episode.json')):
                 with open(os.path.join(self.output_dir, str(i), 'result_episode.json'), 'r') as f:
                     result = json.load(f)
                 total_finish += result['finish'] / result['total']
+                results[i] = result
                 continue
             # The episode has been evaluated before
+
             if not os.path.exists(os.path.join(self.output_dir, str(i))):
                 os.makedirs(os.path.join(self.output_dir, str(i)))
             self.logger.info('Episode: {}/{}'.format(i + 1, num_eval_episodes))
@@ -68,7 +72,6 @@ class Challenge:
                         raise Exception(f"{agent.agent_type} not available")
                 else:
                     agent.reset(output_dir = os.path.join(self.output_dir, str(i)))
-            self.env.save_images(os.path.join(self.output_dir, str(i), 'Images'))
             self.logger.info(f"Environment Reset. Took {time.time() - start_time} secs")
             local_finish = self.env.check_goal()
             done = False
@@ -77,10 +80,10 @@ class Challenge:
             while not done:
                 step_num += 1
                 actions = {}
+                if self.save_img: self.env.save_images(os.path.join(self.output_dir, str(i), 'Images'))
                 for agent_id, agent in enumerate(agents):
                     actions[str(agent_id)] = agent.act(state[str(agent_id)])
                 state, reward, done, info = self.env.step(actions)
-                self.env.save_images(os.path.join(self.output_dir, str(i), 'Images'))
                 local_reward += reward
                 local_finish = self.env.check_goal()
                 self.logger.info(f"Executing step {step_num} for episode: {i}, actions: {actions}, finish: {local_finish}, frame: {self.env.num_frames}")
@@ -93,12 +96,14 @@ class Challenge:
             }
             with open(os.path.join(self.output_dir, str(i), 'result_episode.json'), 'w') as f:
                 json.dump(result, f)
+            results[i] = result
         avg_finish = total_finish / num_eval_episodes
         results = {
+            "episode_results": results,
             "avg_finish": avg_finish
         }
         with open(os.path.join(self.output_dir, 'eval_result.json'), 'w') as f:
-            json.dump(results, f)
+            json.dump(results, f, indent=4)
         self.logger.info(f'eval done, avg transport rate {avg_finish}')
         self.logger.info('time: {}'.format(time.time() - start))
         return avg_finish
@@ -152,6 +157,7 @@ def main():
     parser.add_argument("--cot", action='store_true', help="use chain-of-thought prompt")
     parser.add_argument("--echo", action='store_true', help="to include prompt in the outputs")
     parser.add_argument("--screen_size", default=512, type=int)
+    parser.add_argument("--save_img", action='store_true', help="save images", default=True)
     args = parser.parse_args()
 
     args.number_of_agents = len(args.agents)
@@ -160,7 +166,7 @@ def main():
     if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
     logger = init_logs(args.output_dir)
 
-    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size)
+    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size, save_img = args.save_img)
     agents = []
     for i, agent in enumerate(args.agents):
         if agent == 'h_agent':
