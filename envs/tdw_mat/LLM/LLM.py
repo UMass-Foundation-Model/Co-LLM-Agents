@@ -477,12 +477,12 @@ class LLM:
 				outputs, usage = self.generator(chat_prompt if self.chat else gen_prompt, self.sampling_params)
 				self.total_cost += usage
 				message = outputs[0]
-				info['message_generator_prompt'] = gen_prompt
-				info['message_generator_outputs'] = outputs
-				info['message_generator_usage'] = usage
+				info['prompt_comm'] = gen_prompt
+				info['output_comm'] = outputs
+				info['usage_comm'] = usage
 				if self.debug:
-					print(f"message_generator_prompt:\n{gen_prompt}")
-					print(f"message_generator_outputs:\n{message}")
+					print(f"prompt_comm:\n{gen_prompt}")
+					print(f"output_comm:\n{message}")
 
 		available_plans, num, available_plans_list = self.get_available_plans(message)
 		if num == 0 or (message is not None and num == 1):
@@ -509,19 +509,19 @@ class LLM:
 				output += '.'
 			self.total_cost += usage
 			# info['outputs_cot'] = outputs
-			info['usage_step_1'] = usage
+			# info['usage_plan_stage_1'] = usage
 			if self.debug:
-				print(f"cot_output:\n{output}")
+				print(f"output_plan_stage_1:\n{output}")
 			chat_prompt = [{"role": "user", "content": prompt},
 						   {"role": "assistant", "content": output},
 						   {"role": "user", "content": "Answer with only one best next action. So the answer is option"}]
-			normal_prompt = prompt + output + ' So the answer is option'
+			normal_prompt = prompt + ' ' + output + ' Answer with only one best next action. So the answer is option'
 			outputs, usage = self.generator(chat_prompt if self.chat else normal_prompt, self.sampling_params)
 			output = outputs[0]
 			self.total_cost += usage
-			info['usage_step_2'] = usage
+			# info['usage_plan_stage_2'] = usage
 			if self.debug:
-				print(f"base_output:\n{output}")
+				print(f"output_plan_stage_1:\n{output}")
 				print(f"total cost: {self.total_cost}")
 		else:
 			normal_prompt = prompt
@@ -530,15 +530,15 @@ class LLM:
 				print(f"base_prompt:\n{prompt}")
 			outputs, usage = self.generator(chat_prompt if self.chat else normal_prompt, self.sampling_params)
 			output = outputs[0]
-			info['usage_step_1'] = usage
+			# info['usage_step_1'] = usage
 			if self.debug:
-				print(f"base_output:\n{output}")
+				print(f"output_plan_stage_1:\n{output}")
 		plan, flags = self.parse_answer(available_plans_list, output)
 		if self.debug:
 			print(f"plan: {plan}\n")
 		info.update({"num_available_actions": num,
-					 "prompt": normal_prompt,
-					 "output": output,
+					 "prompt_plan_stage_2": normal_prompt,
+					 "output_plan_stage_2": output,
 					 "parse_exception": flags,
 					 "plan": plan,
 					 "total_cost": self.total_cost})

@@ -7,7 +7,7 @@ Alice: ""Hi, I'll let you know if I find any target objects and containers, fini
 Bob: ""Thanks! I'll let you know if I find any target objects and containers, finish any subgoals, and ask for your help when necessary.""
 $DIALOGUE_HISTORY$
 Previous actions: $ACTION_HISTORY$
-Available actions: (You can only choose the action in the list)
+Available actions:
 $AVAILABLE_ACTIONS$
 Answer:"
 gen,"My friend $OPPO_NAME$ and I want to transport as many target objects as possible to the bed with the help of containers within 3000 steps. I can hold two things at a time, and they can be objects or containers. I can grasp containers and put objects into them to hold more objects at a time. Given our shared goal, dialogue history, my progress, and previous actions, please help me generate a short message to send to $OPPO_NAME$ to help us achieve the goal as soon as possible. Note that a container can contain three objects, and will be lost once transported to the bed. I can only put objects into the container I hold after grasping it. All objects are denoted as <name> (id), such as <table> (712). Actions take several steps to finish. It may be costly to go to another room or transport to the bed, use these actions sparingly.

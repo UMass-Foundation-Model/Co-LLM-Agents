@@ -1,10 +1,12 @@
-ps ux | grep port\ 2087 | awk {'print $2'} | xargs kill
+lm_id=gpt-4
+port=2087
+pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
---lm_id gpt-4 \
---run_id 5001 \
---port 2087 \
+--lm_id $lm_id \
+--run_id $lm_id \
+--port $port \
 --agents lm_agent lm_agent \
 --communication \
 --prompt_template_path LLM/prompt_com.csv \
@@ -14,4 +16,4 @@ python3 tdw-gym/challenge.py \
 --screen_size 256 \
 --debug
 
-ps ux | grep port\ 2087 | awk {'print $2'} | xargs kill
+pkill -f -9 "port $port"
