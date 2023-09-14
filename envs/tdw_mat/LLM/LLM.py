@@ -175,6 +175,7 @@ class LLM:
 											 **sampling_params)
 				generated_samples = self.tokenizer.batch_decode(output_dict.sequences[:, prompt_len:])
 				generated_samples = [s.strip() for s in generated_samples]
+				generated_samples = [s[:-4] if '</s>' in s[-4:] else s for s in generated_samples]
 				if self.debug:
 					print(generated_samples)
 				return generated_samples, 0
