@@ -12,6 +12,7 @@ from tdw.replicant.arm import Arm
 from tdw.tdw_utils import TDWUtils
 
 from transport_challenge_multi_agent.transport_challenge import TransportChallenge
+from transport_challenge_multi_agent.downloader import download_asset_bundles
 from collections import Counter
 from tdw.replicant.action_status import ActionStatus
 from tdw.replicant.image_frequency import ImageFrequency
@@ -202,6 +203,7 @@ class TDW(Env):
         if self.controller is not None:
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
+        download_asset_bundles()
         self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir))
         print("Controller connected")
         self.success = False
