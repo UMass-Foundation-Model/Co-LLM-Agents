@@ -38,8 +38,8 @@ def timeout_handler(signum, frame):
 @retry(wait=wait_fixed(5), retry=retry_if_exception_type(TimeoutException))  # wait 5 seconds between retries
 def might_fail_launch(launch, port = None):
     if port is not None:
-        print(f"ps ux | grep port\ {port} | xargs kill")
-        os.system(f"ps ux | grep port\ {port} | xargs kill")
+        print("kill failure launch ...", f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
+        os.system(f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(15)  
     try:
