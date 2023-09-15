@@ -36,7 +36,10 @@ def timeout_handler(signum, frame):
     raise TimeoutException("Function execution exceeded the timeout limit")
 
 @retry(wait=wait_fixed(5), retry=retry_if_exception_type(TimeoutException))  # wait 5 seconds between retries
-def might_fail_launch(launch):
+def might_fail_launch(launch, port = None):
+    if port is not None:
+        print(f"ps ux | grep port\ {port} | xargs kill")
+        os.system(f"ps ux | grep port\ {port} | xargs kill")
     signal.signal(signal.SIGALRM, timeout_handler)
     signal.alarm(15)  
     try:
@@ -205,7 +208,7 @@ class TDW(Env):
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
         download_asset_bundles()
-        self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir))
+        self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir), port = self.port)
         print("Controller connected")
         self.success = False
         self.messages = [None for _ in range(self.number_of_agents)]
