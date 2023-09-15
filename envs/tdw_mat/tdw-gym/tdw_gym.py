@@ -12,6 +12,7 @@ from tdw.replicant.arm import Arm
 from tdw.tdw_utils import TDWUtils
 
 from transport_challenge_multi_agent.transport_challenge import TransportChallenge
+from transport_challenge_multi_agent.downloader import download_asset_bundles
 from collections import Counter
 from tdw.replicant.action_status import ActionStatus
 from tdw.replicant.image_frequency import ImageFrequency
@@ -28,21 +29,24 @@ from functools import partial
 import signal
 from tenacity import retry, wait_fixed, retry_if_exception_type
 
-# class TimeoutException(Exception):
-#     pass
-# 
-# def timeout_handler(signum, frame):
-#     raise TimeoutException("Function execution exceeded the timeout limit")
-# 
-# @retry(wait=wait_fixed(5), retry=retry_if_exception_type(TimeoutException))  # wait 5 seconds between retries
-# def might_fail_launch(launch):
-#     signal.signal(signal.SIGALRM, timeout_handler)
-#     signal.alarm(15)  
-#     try:
-#         print("Trying to launch tdw ...")
-#         return launch()
-#     finally:
-#         signal.alarm(0)  
+class TimeoutException(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise TimeoutException("Function execution exceeded the timeout limit")
+
+@retry(wait=wait_fixed(5), retry=retry_if_exception_type(TimeoutException))  # wait 5 seconds between retries
+def might_fail_launch(launch, port = None):
+    if port is not None:
+        print("kill failure launch ...", f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
+        os.system(f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(15)  
+    try:
+        print("Trying to launch tdw ...")
+        return launch()
+    finally:
+        signal.alarm(0)  
 
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
@@ -203,9 +207,8 @@ class TDW(Env):
         if self.controller is not None:
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
-        # self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir))
-        self.controller = TransportChallenge(port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,
-                 screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir)
+        download_asset_bundles()
+        self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir), port = self.port)
         print("Controller connected")
         self.success = False
         self.messages = [None for _ in range(self.number_of_agents)]
