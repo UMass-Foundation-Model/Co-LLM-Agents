@@ -494,7 +494,7 @@ class lm_agent:
         if self.current_room == target_room and self.room_distance == 0:
             self.plan = None
             return None
-        # add an interrupt if anything new happens
+        # add an interruption if anything new happens
         if len(self.new_object_list[0]) + len(self.new_object_list[1]) + len(self.new_object_list[2]) > 0:
             self.action_history[-1] = self.action_history[-1].replace(self.plan, f'go to {self.current_room}')
             self.new_object_list = {0: [], 1: [], 2: []}
