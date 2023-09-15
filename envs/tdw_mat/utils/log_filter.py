@@ -45,16 +45,20 @@ with open(log_path, 'r') as f:
             pure_text = l[l.find('{'):]
             llm_output = eval(pure_text)['LLM']
             if args.type == 'nips':
-                agent_name = llm_output['prompts'][4:llm_output['prompts'].find('. ')]
+                prompt = llm_output['prompts']
+                agent_name = prompt[4:prompt.find('. ')]
                 # print(agent_name)
                 LLM_data['episode'].append(episode)
                 LLM_data['agent'].append(agent_name)
 
-                LLM_data['prompt'].append(llm_output['prompts'])
+                LLM_data['prompt_comm'].append(llm_output['message_generator_prompt'] if 'message_generator_prompt' in llm_output else "")
+                LLM_data['output_comm'].append(llm_output['message_generator_outputs'][0] if 'message_generator_outputs' in llm_output else "")
+
+                LLM_data['prompt_plan'].append(llm_output['prompts'])
                 LLM_data['output_plan_stage_1'].append(llm_output['cot_outputs'][0])
                 LLM_data['output_plan_stage_2'].append(llm_output['outputs'][0])
                 # print(llm_output)
-                LLM_data['output_comm'].append(llm_output['message_generator_outputs'][0] if 'message_generator_outputs' in llm_output else "")
+
                 LLM_data['output_parse_results'].append(llm_output['plan'])
             else:
                 prompt = llm_output['prompt']
@@ -63,18 +67,21 @@ with open(log_path, 'r') as f:
                 # print(agent_name)
                 LLM_data['episode'].append(episode)
                 LLM_data['agent'].append(agent_name)
+
+                LLM_data['prompt_comm'].append(llm_output['message_generator_prompt'] if 'message_generator_prompt' in llm_output else "")
+                LLM_data['output_comm'].append(llm_output['message_generator_outputs'][0] if 'message_generator_outputs' in llm_output else "")
+
                 LLM_data['prompt_plan'].append(prompt)
-                # print(prompt)
                 LLM_data['output_plan_stage_1'].append(re.search(r"Let's think step by step\.(.*?) So the answer is option", prompt, re.S).group(1))
                 LLM_data['output_plan_stage_2'].append(output)
                 # print(llm_output)
-                LLM_data['prompt_comm'].append(llm_output['message_generator_prompt'] if 'message_generator_prompt' in llm_output else "")
-                LLM_data['output_comm'].append(llm_output['message_generator_outputs'][0] if 'message_generator_outputs' in llm_output else "")
+
                 LLM_data['parse_exception'].append(llm_output['parse_exception'])
                 LLM_data['output_parse_results'].append(llm_output['plan'])
     df =pd.DataFrame(LLM_data)
     # print(df)
-    df.to_csv(output_path)
+    df[df['agent'] == 'Alice'].to_csv(output_path.replace('.csv', '_Alice.csv'))
+    df[df['agent'] == 'Bob'].to_csv(output_path.replace('.csv', '_Bob.csv'))
             # if 'cot_outputs' not in llm_output:
             #     cot_out = ''
             # else:

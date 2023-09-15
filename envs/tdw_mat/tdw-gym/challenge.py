@@ -37,41 +37,40 @@ class Challenge:
 
     def submit(self, agents, logger, eval_episodes):
         total_finish = 0.0
-        if eval_episodes == -1:
-            num_eval_episodes = len(self.data)
-        else:
-            num_eval_episodes = eval_episodes
-        
+        if eval_episodes[0] == -1:
+            eval_episodes = range(len(self.data))
+        num_eval_episodes = len(eval_episodes)
+
         start = time.time()
         results = {}
-        for i in range(num_eval_episodes):
+        for i, episode in enumerate(eval_episodes):
             start_time = time.time()
-            if os.path.exists(os.path.join(self.output_dir, str(i), 'result_episode.json')):
-                with open(os.path.join(self.output_dir, str(i), 'result_episode.json'), 'r') as f:
+            if os.path.exists(os.path.join(self.output_dir, str(episode), 'result_episode.json')):
+                with open(os.path.join(self.output_dir, str(episode), 'result_episode.json'), 'r') as f:
                     result = json.load(f)
                 total_finish += result['finish'] / result['total']
-                results[i] = result
+                results[episode] = result
                 continue
             # The episode has been evaluated before
 
-            if not os.path.exists(os.path.join(self.output_dir, str(i))):
-                os.makedirs(os.path.join(self.output_dir, str(i)))
-            self.logger.info('Episode: {}/{}'.format(i + 1, num_eval_episodes))
-            self.logger.info(f"Resetting Environment ... data is {self.data[i]}")
-            state, info, env_api = self.env.reset(seed=self.data[i]['seed'], options=self.data[i], output_dir = os.path.join(self.output_dir, str(i)))
+            if not os.path.exists(os.path.join(self.output_dir, str(episode))):
+                os.makedirs(os.path.join(self.output_dir, str(episode)))
+            self.logger.info('Episode {} ({}/{})'.format(episode, i + 1, num_eval_episodes))
+            self.logger.info(f"Resetting Environment ... data is {self.data[episode]}")
+            state, info, env_api = self.env.reset(seed=self.data[episode]['seed'], options=self.data[episode], output_dir = os.path.join(self.output_dir, str(episode)))
             for id, agent in enumerate(agents):
                 if type(env_api) == list:
                     curr_api = env_api[id]
                 else: curr_api = env_api
                 if info['goal_description'] is not None:
                     if agent.agent_type == 'h_agent':
-                        agent.reset(goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(i)), env_api = curr_api, agent_color = info['agent_colors'][id], agent_id = id, gt_mask = self.gt_mask)
+                        agent.reset(goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(episode)), env_api = curr_api, agent_color = info['agent_colors'][id], agent_id = id, gt_mask = self.gt_mask)
                     elif agent.agent_type == 'lm_agent':
-                        agent.reset(obs = state[str(id)], goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(i)), env_api = curr_api, rooms_name=info['rooms_name'], gt_mask = self.gt_mask)
+                        agent.reset(obs = state[str(id)], goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(episode)), env_api = curr_api, rooms_name=info['rooms_name'], gt_mask = self.gt_mask)
                     else:
                         raise Exception(f"{agent.agent_type} not available")
                 else:
-                    agent.reset(output_dir = os.path.join(self.output_dir, str(i)))
+                    agent.reset(output_dir = os.path.join(self.output_dir, str(episode)))
             self.logger.info(f"Environment Reset. Took {time.time() - start_time} secs")
             local_finish = self.env.check_goal()
             done = False
@@ -80,13 +79,13 @@ class Challenge:
             while not done:
                 step_num += 1
                 actions = {}
-                if self.save_img: self.env.save_images(os.path.join(self.output_dir, str(i), 'Images'))
+                if self.save_img: self.env.save_images(os.path.join(self.output_dir, str(episode), 'Images'))
                 for agent_id, agent in enumerate(agents):
                     actions[str(agent_id)] = agent.act(state[str(agent_id)])
                 state, reward, done, info = self.env.step(actions)
                 local_reward += reward
                 local_finish = self.env.check_goal()
-                self.logger.info(f"Executing step {step_num} for episode: {i}, actions: {actions}, finish: {local_finish}, frame: {self.env.num_frames}")
+                self.logger.info(f"Executing step {step_num} for episode: {episode}, actions: {actions}, finish: {local_finish}, frame: {self.env.num_frames}")
                 if done:
                     break
             total_finish += local_finish[0] / local_finish[1]
@@ -94,9 +93,9 @@ class Challenge:
                 "finish": local_finish[0],
                 "total": local_finish[1],
             }
-            with open(os.path.join(self.output_dir, str(i), 'result_episode.json'), 'w') as f:
+            with open(os.path.join(self.output_dir, str(episode), 'result_episode.json'), 'w') as f:
                 json.dump(result, f)
-            results[i] = result
+            results[episode] = result
         avg_finish = total_finish / num_eval_episodes
         results = {
             "episode_results": results,
@@ -134,8 +133,8 @@ def main():
     parser.add_argument("--data_path", type=str, default="test_env.json")
     parser.add_argument("--data_prefix", type=str, default="dataset/arxiv_dataset_v3/")
     parser.add_argument("--port", default=1071, type=int)
-    parser.add_argument("--agents", nargs= '+', type=str, default=("h_agent",))
-    parser.add_argument("--eval_episodes", default=-1, type=int, help="how many episodes to evaluate on")
+    parser.add_argument("--agents", nargs='+', type=str, default=("h_agent",))
+    parser.add_argument("--eval_episodes", nargs='+', default=(-1,), type=int, help="which episodes to evaluate on")
     parser.add_argument("--max_frames", default=3000, type=int, help="max frames per episode")
     parser.add_argument("--new_setting", default=True, action='store_true')
     parser.add_argument("--communication", action='store_true')

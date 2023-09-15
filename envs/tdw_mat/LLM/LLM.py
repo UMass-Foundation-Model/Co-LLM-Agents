@@ -44,7 +44,7 @@ class LLM:
 		self.model = None
 		self.tokenizer = None
 		self.lm_id = lm_id
-		self.chat = 'gpt-3.5-turbo' in lm_id or 'gpt-4' in lm_id
+		self.chat = 'gpt-3.5-turbo' in lm_id or 'gpt-4' in lm_id or 'chat' in lm_id
 		self.OPENAI_KEY = None
 		self.total_cost = 0
 
