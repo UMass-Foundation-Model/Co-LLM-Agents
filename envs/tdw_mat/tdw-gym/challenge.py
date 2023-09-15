@@ -157,7 +157,7 @@ def main():
     parser.add_argument("--cot", action='store_true', help="use chain-of-thought prompt")
     parser.add_argument("--echo", action='store_true', help="to include prompt in the outputs")
     parser.add_argument("--screen_size", default=512, type=int)
-    parser.add_argument("--save_img", action='store_true', help="save images", default=True)
+    parser.add_argument("--no_save_img", action='store_true', help="do not save images", default=False)
     args = parser.parse_args()
 
     args.number_of_agents = len(args.agents)
@@ -166,7 +166,7 @@ def main():
     if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
     logger = init_logs(args.output_dir)
 
-    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size, save_img = args.save_img)
+    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size, save_img = not args.no_save_img)
     agents = []
     for i, agent in enumerate(args.agents):
         if agent == 'h_agent':

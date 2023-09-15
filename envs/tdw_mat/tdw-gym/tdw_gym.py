@@ -48,6 +48,7 @@ def might_fail_launch(launch):
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
                         screen_size = 512, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
+        self.messages = None
         self.data_prefix = data_prefix
         self.replicant_colors = None
         self.replicant_ids = None

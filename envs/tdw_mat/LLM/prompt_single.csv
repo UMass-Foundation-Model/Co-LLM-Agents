@@ -3,6 +3,6 @@ base,"I'm $AGENT_NAME$. I want to transport as many target objects as possible t
 Goal: $GOAL$
 Progress: $PROGRESS$
 Previous actions: $ACTION_HISTORY$
-Available actions: (You can only choose the action in the list)
+Available actions:
 $AVAILABLE_ACTIONS$
 Answer:"
