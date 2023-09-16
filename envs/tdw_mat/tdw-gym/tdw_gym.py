@@ -252,13 +252,10 @@ class TDW(Env):
         self.controller.communicate({"$type": "add_hdri_skybox", "name": "sky_white", "url": "https://tdw-public.s3.amazonaws.com/hdri_skyboxes/linux/2019.1/sky_white", "exposure": 2, "initial_skybox_rotation": 0, "sun_elevation": 90, "sun_initial_angle": 0, "sun_intensity": 1.25})
             
         # Set the field of view of the agent.
-        if self.gt_mask:
-            for replicant_id in self.controller.replicants:
-                self.controller.communicate({"$type": "set_field_of_view",
-                              "avatar_id" : str(replicant_id), "field_of_view" : 90})
-            self.fov = 90
-        # Since detection model is trained in normal FOV, we need to change the FOV to normal
-        else: self.fov = 54.43223
+        for replicant_id in self.controller.replicants:
+            self.controller.communicate({"$type": "set_field_of_view",
+                            "avatar_id" : str(replicant_id), "field_of_view" : 90})
+        self.fov = 90
         
         # Add a object manager for object position
         self.object_manager = ObjectManager()
