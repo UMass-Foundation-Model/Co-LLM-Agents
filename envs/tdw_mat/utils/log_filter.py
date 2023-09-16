@@ -57,7 +57,7 @@ with open(log_path, 'r') as f:
             LLM_data['output_parse_results'].append(llm_output['plan'])
         else:
             prompt = llm_output['prompt_plan_stage_2']
-            output = llm_output['output_plan_stage_2'][0]
+            output = llm_output['output_plan_stage_2']
             agent_name = prompt[4:prompt.find('. ')]
             # print(agent_name)
             LLM_data['episode'].append(episode)
