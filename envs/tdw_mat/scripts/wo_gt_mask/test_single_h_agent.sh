@@ -1,17 +1,16 @@
-ps ux | grep port\ 3063 | awk {'print $2'} | xargs kill
+port=3063
+pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
---run_id 1001 \
---port 3063 \
+--run_id vision-single \
+--port $port \
 --agents h_agent \
---prompt_template_path LLM/prompt_nocom.csv \
---max_tokens 256 \
---cot \
---lm_id gpt-4 \
 --max_frames 3000 \
 --data_prefix dataset/dataset_test/ \
+--eval_episodes 0 11 17 18 1 2 3 21 22 23 4 5 6 7 8 9 10 12 13 14 15 16 19 20 \
 --debug \
+--screen_size 512 \
 --no_gt_mask
 
-ps ux | grep port\ 3063 | awk {'print $2'} | xargs kill
+pkill -f -9 "port $port"

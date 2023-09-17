@@ -1,5 +1,5 @@
 lm_id=gpt-4
-port=20877
+port=30004
 pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \

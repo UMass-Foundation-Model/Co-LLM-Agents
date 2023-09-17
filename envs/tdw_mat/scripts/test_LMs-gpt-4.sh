@@ -1,5 +1,5 @@
 lm_id=gpt-4
-port=2087
+port=10004
 pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
@@ -13,7 +13,7 @@ python3 tdw-gym/challenge.py \
 --max_tokens 256 \
 --cot \
 --data_prefix dataset/dataset_test/ \
---eval_episodes 11 17 18 \
+--eval_episodes 0 11 17 18 1 2 3 21 22 23 4 5 6 7 8 9 10 12 13 14 15 16 19 20 \
 --screen_size 256 \
 --no_save_img \
 --debug
