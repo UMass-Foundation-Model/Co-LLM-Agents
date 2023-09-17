@@ -483,7 +483,7 @@ class LLM:
 				if message[0]!='"':
 					message = re.search(r'"([^"]+)"', message)
 					if message:
-						message = message.group(1)
+						message = '"' + message.group(1) + '"'
 				info['prompt_comm'] = gen_prompt
 				info['output_comm'] = outputs
 				info['usage_comm'] = usage
