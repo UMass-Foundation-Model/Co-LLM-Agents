@@ -10,6 +10,7 @@ python3 tdw-gym/challenge.py \
 --cot \
 --data_prefix dataset/dataset_test/ \
 --debug \
+--screen_size 512 \
 --no_gt_mask
 
 ps ux | grep port\ 1091 | awk {'print $2'} | xargs kill

@@ -11,6 +11,7 @@ python3 tdw-gym/challenge.py \
 --lm_id gpt-4 \
 --data_prefix dataset/dataset_test/ \
 --debug \
+--screen_size 512 \
 --no_gt_mask
 
 ps ux | grep port\ 3085 | awk {'print $2'} | xargs kill
