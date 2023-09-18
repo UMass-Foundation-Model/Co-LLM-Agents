@@ -58,12 +58,14 @@ def init_detection():
         detector = tdw_detection()
     return detector
 
+from PIL import Image
 def main():
     tdw = tdw_detection()
     result = tdw("demo/demo_images/img_0.jpg", decode = False, no_save_pred = False, out_dir = 'outputs')
     print(result)
-    img = cv2.imread("demo/demo_images/img_0.jpg")
-    img = np.array(img)
+    img = Image.open("demo/demo_images/img_0.jpg")
+    img = np.array(img)[..., [2, 1, 0]]
+    # need to change channel here.
     result = tdw(img, decode = True)
     print(result)
     print(result['predictions'][0]['masks'].shape)

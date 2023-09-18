@@ -587,7 +587,7 @@ class H_agent:
         #cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
 
     def detect(self):
-        detect_result = self.detection_model(self.obs['rgb'])['predictions'][0]
+        detect_result = self.detection_model(self.obs['rgb'][..., [2, 1, 0]])['predictions'][0]
         obj_infos = []
         curr_seg_mask = np.zeros((self.obs['rgb'].shape[0], self.obs['rgb'].shape[1], 3)).astype(np.int32)
         curr_seg_mask.fill(-1)
@@ -599,6 +599,7 @@ class H_agent:
             if curr_info['id'] is not None:
                 obj_infos.append(curr_info)
                 curr_seg_mask[np.where(mask)] = curr_info['seg_color']
+        #self.detection_model(self.obs['rgb'][..., [2, 1, 0]], decode = False, no_save_pred = False, out_dir = 'outputs')
         curr_with_seg, curr_seg_flag = self.env_api['get_with_character_mask'](character_object_ids = self.with_character)
         curr_seg_mask = curr_seg_mask * (~ np.expand_dims(curr_seg_flag, axis = -1)) + curr_with_seg * np.expand_dims(curr_seg_flag, axis = -1)
         return obj_infos, curr_seg_mask

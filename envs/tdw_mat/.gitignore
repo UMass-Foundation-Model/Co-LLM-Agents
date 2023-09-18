@@ -159,7 +159,7 @@ LLM/chat_raw.json
 action.pkl
 results.zip
 
-detection_pipeline/epoch_1.pth
+detection_pipeline/*.pth
 detection_pipeline/mmdetection/
 detection_pipeline/demo/
 captured*/
