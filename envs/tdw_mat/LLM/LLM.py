@@ -1,4 +1,5 @@
 import random
+import re
 from typing import List
 
 import openai
@@ -218,8 +219,10 @@ class LLM:
 		flags = 'AC'
 		for i in range(len(available_actions)):
 			action = available_actions[i]
+			if action.startswith("send a message:"):
+				action = "send a message"
 			if action in text:
-				return action, flags
+				return available_actions[i], flags
 		sents = text.split('\n')  # Split by space
 		words = []
 		for sent in sents:
@@ -477,6 +480,10 @@ class LLM:
 				outputs, usage = self.generator(chat_prompt if self.chat else gen_prompt, self.sampling_params)
 				self.total_cost += usage
 				message = outputs[0]
+				if message[0]!='"':
+					message = re.search(r'"([^"]+)"', message)
+					if message:
+						message = '"' + message.group(1) + '"'
 				info['prompt_comm'] = gen_prompt
 				info['output_comm'] = outputs
 				info['usage_comm'] = usage

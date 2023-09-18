@@ -131,7 +131,7 @@ def main():
     parser.add_argument("--output_dir", type=str, default="results")
     parser.add_argument("--run_id", type=str, default='try')
     parser.add_argument("--data_path", type=str, default="test_env.json")
-    parser.add_argument("--data_prefix", type=str, default="dataset/arxiv_dataset_v3/")
+    parser.add_argument("--data_prefix", type=str, default="dataset/dataset_test/")
     parser.add_argument("--port", default=1071, type=int)
     parser.add_argument("--agents", nargs='+', type=str, default=("h_agent",))
     parser.add_argument("--eval_episodes", nargs='+', default=(-1,), type=int, help="which episodes to evaluate on")
