@@ -576,7 +576,7 @@ class lm_agent:
         return action
     
     def detect(self):
-        detect_result = self.detection_model(self.obs['rgb'])['predictions'][0]
+        detect_result = self.detection_model(self.obs['rgb'][..., [2, 1, 0]])['predictions'][0]
         obj_infos = []
         curr_seg_mask = np.zeros((self.obs['rgb'].shape[0], self.obs['rgb'].shape[1], 3)).astype(np.int32)
         curr_seg_mask.fill(-1)
