@@ -46,6 +46,7 @@ class lm_agent:
         self.max_frames = max_frames
         self.output_dir = output_dir
         self.map_size = (240, 120)
+        self.save_img = True
         self._scene_bounds = {
             "x_min": -15,
             "x_max": 15,
@@ -380,7 +381,7 @@ class lm_agent:
                                   (g_i, g_j), allow_diagonal=False)
         return path
 
-    def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, gt_mask = True):
+    def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, gt_mask = True, save_img = True):
         self.invalid_count = 0
         self.obs = obs
         self.env_api = env_api
@@ -441,6 +442,7 @@ class lm_agent:
         self.navigation_threshold = 5
         print(self.rooms_name)
         self.LLM.reset(self.rooms_name, self.goal_objects)
+        self.save_img = save_img
 
     def move(self, target_pos):
         self.local_step += 1
@@ -698,7 +700,8 @@ class lm_agent:
               }
 
         # save occupancy map:
-        self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.steps:04}')
+        if self.save_img:
+            self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.steps:04}')
 
         action = None
         lm_times = 0
