@@ -39,6 +39,7 @@ class H_agent:
         self.gt_mask = None
         self.navigation_threshold = 5
         self.detection_threshold = 5
+        self.save_img = True
         # detection_threshold < navigation_threshold when not gt_mask
         self._scene_bounds = {
             "x_min": -15,
@@ -363,11 +364,12 @@ class H_agent:
                 self.goal = self.map2pos(i, j)
                 return
         
-    def reset(self, goal_objects = None, max_frames = 3000, output_dir = None, env_api = {}, agent_color = [-1, -1, -1], agent_id = 0, gt_mask = True):
+    def reset(self, goal_objects = None, max_frames = 3000, output_dir = None, env_api = {}, agent_color = [-1, -1, -1], agent_id = 0, gt_mask = True, save_img = True):
         self.is_reset = True
         self.env_api = env_api
         self.agent_color = agent_color
         self.agent_id = agent_id
+        self.save_img = save_img
         if goal_objects is not None:
             assert type(goal_objects) == dict
             self.goal_objects = goal_objects
@@ -631,7 +633,8 @@ class H_agent:
                 self.id_map[np.where(self.id_map == obj)] = 0
 
         # save occupancy map:
-        self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.num_step - 1:04}_{self.obs["current_frames"]:04}')
+        if self.save_img:
+            self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.num_step - 1:04}_{self.obs["current_frames"]:04}')
 
         if self.obs['status'] == 0: # ongoing, only update the map, do not act.
             return {'type': 'ongoing'}
