@@ -50,7 +50,7 @@ class TransportChallenge(AssetCachedController):
     GOAL_ZONE_RADIUS: float = 1
 
     def __init__(self, port: int = 1071, check_version: bool = True, launch_build: bool = True, screen_width: int = 256,
-                 screen_height: int = 256, image_frequency: ImageFrequency = ImageFrequency.once, png: bool = True, asset_cache_dir = "asset_cache",
+                 screen_height: int = 256, image_frequency: ImageFrequency = ImageFrequency.once, png: bool = True, asset_cache_dir = "transport_challenge_asset_bundles",
                  image_passes: List[str] = None, target_framerate: int = 250, enable_collision_detection: bool = False, new_setting = False, logger_dir = None):
         """
         :param port: The socket port used for communicating with the build.

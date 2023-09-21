@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import List, Union
 from tdw.controller import Controller
@@ -7,7 +9,7 @@ import shutil
 import hashlib
 
 class AssetCachedController(Controller):
-    def __init__(self, cache_dir="asset_cache", **kwargs):
+    def __init__(self, cache_dir="transport_challenge_asset_bundles", **kwargs):
         self.cache_dir = None
         if cache_dir is not None:
             if not os.path.exists(cache_dir):
