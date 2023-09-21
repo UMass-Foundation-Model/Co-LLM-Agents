@@ -3,7 +3,8 @@ pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
---run_id HL \
+--experiment_name HL \
+--run_id run_1 \
 --port $port \
 --agents h_agent lm_agent \
 --prompt_template_path LLM/prompt_com.csv \

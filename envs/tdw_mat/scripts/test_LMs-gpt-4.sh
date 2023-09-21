@@ -5,7 +5,8 @@ pkill -f -9 "port $port"
 python3 tdw-gym/challenge.py \
 --output_dir results \
 --lm_id $lm_id \
---run_id LMs-$lm_id \
+--experiment_name LMs-$lm_id \
+--run_id run_1 \
 --port $port \
 --agents lm_agent lm_agent \
 --communication \
