@@ -76,20 +76,30 @@ def eval_EI(single_log_dir, log_dir, eval_episodes, result_path):
     transport_rate = []
     EI = []
     for i, episode in enumerate(eval_episodes):
-        result_path = os.path.join(log_dir, str(episode), 'result_episode.json')
-        single_result_path = os.path.join(single_log_dir, str(episode), 'result_episode.json')
-        with open(result_path, 'r') as f:
-            result = json.load(f)
-        with open(single_result_path, 'r') as fs:
-            single_result = json.load(fs)
-        tr = result['finish'] / result['total']
-        tr_s = single_result['finish'] / single_result['total']
+        result_list = []
+        result_single_list = []
+        result_file_list = os.listdir(log_dir)
+        for runs in result_file_list:
+            json_path = os.path.join(log_dir, runs, str(episode), 'result_episode.json')
+            if os.path.exists(json_path):
+                result = json.load(open(json_path, 'r'))
+                result_list.append(result['finish'] / result['total'])
+        single_result_file_list = os.listdir(single_log_dir)
+        for runs in single_result_file_list:
+            json_path = os.path.join(single_log_dir, runs, str(episode), 'result_episode.json')
+            if os.path.exists(json_path):
+                result = json.load(open(json_path, 'r'))
+                result_single_list.append(result['finish'] / result['total'])
+        tr = np.mean(result_list)
+        tr_s = np.mean(result_single_list)
         ei = (tr - tr_s) / tr
         transport_rate.append(tr)
         EI.append(ei)
         print(f"{episode}\t{tr:.2f}\t{ei:.2f}", file=fout)
-    print(f"average\t{np.mean(transport_rate):.2f}\t{np.mean(EI):.2f}", file=fout)
+        print(f"{episode}\t{tr:.2f}\t{ei:.2f}")
 
+    print(f"average\t{np.mean(transport_rate):.2f}\t{np.mean(EI):.2f}", file=fout)
+    print(f"average\t{np.mean(transport_rate):.2f}\t{np.mean(EI):.2f}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
