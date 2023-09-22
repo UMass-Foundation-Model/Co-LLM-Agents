@@ -118,4 +118,3 @@ if __name__ == "__main__":
         log_path = os.path.join(log_dir, args.log_path)
         output_path = os.path.join(log_dir, args.output_path)
         LLM_filter(log_path, output_path, args.type, eval_episodes, True)
-
