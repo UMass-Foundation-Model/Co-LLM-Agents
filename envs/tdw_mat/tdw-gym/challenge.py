@@ -129,7 +129,8 @@ def init_logs(output_dir, name = 'simple_example'):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_dir", type=str, default="results")
-    parser.add_argument("--run_id", type=str, default='try')
+    parser.add_argument("--experiment_name", type = str, default = "try")
+    parser.add_argument("--run_id", type=str, default='run_0')
     parser.add_argument("--data_path", type=str, default="test_env.json")
     parser.add_argument("--data_prefix", type=str, default="dataset/dataset_test/")
     parser.add_argument("--port", default=1071, type=int)
@@ -160,9 +161,11 @@ def main():
     args = parser.parse_args()
 
     args.number_of_agents = len(args.agents)
-    if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
+    os.makedirs(args.output_dir, exist_ok = True)
+    args.output_dir = os.path.join(args.output_dir, args.experiment_name)
+    os.makedirs(args.output_dir, exist_ok = True)
     args.output_dir = os.path.join(args.output_dir, args.run_id)
-    if not os.path.exists(args.output_dir): os.mkdir(args.output_dir)
+    os.makedirs(args.output_dir, exist_ok = True)
     logger = init_logs(args.output_dir)
 
     challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size, save_img = not args.no_save_img)

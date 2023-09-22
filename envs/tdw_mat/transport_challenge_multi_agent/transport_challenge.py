@@ -19,13 +19,13 @@ from transport_challenge_multi_agent.challenge_state import ChallengeState
 from transport_challenge_multi_agent.replicant_transport_challenge import ReplicantTransportChallenge
 from transport_challenge_multi_agent.paths import CONTAINERS_PATH, TARGET_OBJECTS_PATH, TARGET_OBJECT_MATERIALS_PATH
 from transport_challenge_multi_agent.globals import Globals
-from transport_challenge_multi_agent.downloader import download_asset_bundles
+from transport_challenge_multi_agent.asset_cached_controller import AssetCachedController
 from tdw.add_ons.logger import Logger
 import os
 import json
 
 
-class TransportChallenge(Controller):
+class TransportChallenge(AssetCachedController):
     """
     A subclass of `Controller` for the Transport Challenge. Always use this class instead of `Controller`.
 
@@ -50,7 +50,7 @@ class TransportChallenge(Controller):
     GOAL_ZONE_RADIUS: float = 1
 
     def __init__(self, port: int = 1071, check_version: bool = True, launch_build: bool = True, screen_width: int = 256,
-                 screen_height: int = 256, image_frequency: ImageFrequency = ImageFrequency.once, png: bool = True,
+                 screen_height: int = 256, image_frequency: ImageFrequency = ImageFrequency.once, png: bool = True, asset_cache_dir = "transport_challenge_asset_bundles",
                  image_passes: List[str] = None, target_framerate: int = 250, enable_collision_detection: bool = False, new_setting = False, logger_dir = None):
         """
         :param port: The socket port used for communicating with the build.
@@ -73,7 +73,7 @@ class TransportChallenge(Controller):
             pass
         if TransportChallenge.TDW_VERSION != __version__:
             print(f"Warning! Your local install of TDW is version {__version__} but the Multi-Agent Transport Challenge requires version {TransportChallenge.TDW_VERSION}\n")
-        super().__init__(port=port, check_version=check_version, launch_build=launch_build)
+        super().__init__(cache_dir=asset_cache_dir, port=port, check_version=check_version, launch_build=launch_build)
         if logger_dir is not None:
             self.logger = Logger(path=os.path.join(logger_dir, "action_log.log"))
             self.add_ons.append(self.logger)
@@ -101,7 +101,7 @@ class TransportChallenge(Controller):
         """
         self.goal_position: np.ndarray = np.zeros(shape=3)
         # Download local asset bundles and set the asset bundle librarian paths.
-        download_asset_bundles()
+        # download_asset_bundles()
         # Initialize the random state. This will be reset later.
         self._rng: np.random.RandomState = np.random.RandomState()
         # All possible target objects. Key = name. Value = scale.
