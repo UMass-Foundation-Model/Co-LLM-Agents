@@ -70,8 +70,8 @@ def LLM_filter(log_path, output_path, type, eval_episodes, eval_comm=False):
             df[df['agent'] == 'Bob'].to_csv(output_path.replace('.csv', '_Bob.csv'))
 
 
-def eval_EI(single_log_dir, log_dir, eval_episodes):
-    fout = open(os.path.join(log_dir, 'results.tsv'), 'w')
+def eval_EI(single_log_dir, log_dir, eval_episodes, result_path):
+    fout = open(os.path.join(log_dir, result_path), 'w')
     print(f"episode\ttransport rate\tEI", file=fout)
     transport_rate = []
     EI = []
@@ -96,6 +96,7 @@ if __name__ == "__main__":
     parser.add_argument("--LLM_filter", action='store_true', help="Extract LLM prompts and outputs from log files.")
     parser.add_argument("--log_dir", type=str, default="results")
     parser.add_argument("--log_path", type=str, default="output.log")
+    parser.add_argument("--result_path", type=str, default="results.tsv")
     parser.add_argument("--output_path", type=str, default="LLM_data.csv")
     parser.add_argument("--type", type=str, default="new", choices=['nips', 'new'])
     parser.add_argument("--eval_EI", action='store_true', help="calculate EI")
@@ -112,7 +113,7 @@ if __name__ == "__main__":
         output_path = os.path.join(log_dir, args.output_path)
         LLM_filter(log_path, output_path, args.type, eval_episodes)
     if args.eval_EI:
-        eval_EI(args.single_log_dir, log_dir, eval_episodes)
+        eval_EI(args.single_log_dir, log_dir, eval_episodes, args.result_path)
     if args.eval_comm:
         log_path = os.path.join(log_dir, args.log_path)
         output_path = os.path.join(log_dir, args.output_path)

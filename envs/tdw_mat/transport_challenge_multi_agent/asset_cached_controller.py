@@ -51,7 +51,7 @@ class AssetCachedController(Controller):
         name = hashlib.md5(url.encode()).hexdigest()
         path = self.cache_dir.joinpath(name)
         if not os.path.exists(str(path.resolve())):
-            print("downloading", url, "to", name)
+            print(f"downloading f{url} to {str(path)}")
             content = get(url).content
             path.write_bytes(content)
         return "file://" + str(path.resolve())
