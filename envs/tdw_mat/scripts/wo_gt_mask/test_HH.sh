@@ -3,7 +3,7 @@ pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
---run_id vision-HH \
+--run_id vision-HH-2 \
 --port $port \
 --agents h_agent h_agent \
 --max_frames 3000 \
