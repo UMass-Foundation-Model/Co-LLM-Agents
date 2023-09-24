@@ -1,11 +1,11 @@
-lm_id=Llama-2-13b-chat-hf
-port=20005
+lm_id=Collama-13b-chat-lora-0922
+port=20006
 pkill -f -9 "port $port"
 
 python tdw-gym/challenge.py \
 --output_dir results \
 --source hf \
---lm_id /mnt/nfs/share/Llama/${lm_id} \
+--lm_id /mnt/nfs/share/Llama/Collama/${lm_id} \
 --experiment_name vision-LMs-$lm_id \
 --run_id run_1 \
 --port $port \
