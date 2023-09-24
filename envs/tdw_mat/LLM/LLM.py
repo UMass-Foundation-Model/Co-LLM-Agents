@@ -10,7 +10,7 @@ from openai.error import OpenAIError
 import backoff
 import torch
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM, LlamaTokenizer
 
 class LLM:
 	def __init__(self,
@@ -68,8 +68,8 @@ class LLM:
 					"echo": sampling_parameters.echo,
 				}
 		elif self.source == 'hf':
-			self.tokenizer = AutoTokenizer.from_pretrained(self.lm_id, use_fast=True)
-			self.model = AutoModelForCausalLM.from_pretrained(self.lm_id, device_map='auto', load_in_4bit=True)
+			self.tokenizer = LlamaTokenizer.from_pretrained(self.lm_id, use_fast=True)
+			self.model = LlamaForCausalLM.from_pretrained(self.lm_id, device_map='auto', load_in_4bit=True)
 			self.sampling_params = {
 				"max_new_tokens": sampling_parameters.max_tokens,
 				"temperature": sampling_parameters.t,
