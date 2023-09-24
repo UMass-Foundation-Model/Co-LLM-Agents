@@ -110,6 +110,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_path", type=str, default="LLM_data.csv")
     parser.add_argument("--type", type=str, default="new", choices=['nips', 'new'])
     parser.add_argument("--eval_EI", action='store_true', help="calculate EI")
+    parser.add_argument("--runs", nargs='+', default=(1, 2, 3, 4, 5), type=int)
     parser.add_argument("--eval_episodes", nargs='+', default=(-1,), type=int)
     parser.add_argument("--single_log_dir", type=str, default="results/LM-Llama-2-13b-hf")
     parser.add_argument("--eval_comm", action='store_true', help="calculate number of the comm")
@@ -119,7 +120,7 @@ if __name__ == "__main__":
     if args.eval_episodes[0] != -1:
         eval_episodes = args.eval_episodes
     if args.LLM_filter:
-        log_path = os.path.join(log_dir, args.log_path)
+        log_path = os.path.join(log_dir, 'run_1', args.log_path)
         output_path = os.path.join(log_dir, args.output_path)
         LLM_filter(log_path, output_path, args.type, eval_episodes)
     if args.eval_EI:
