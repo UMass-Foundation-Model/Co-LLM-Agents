@@ -1,3 +1,5 @@
+import random
+
 import pandas as pd
 import json
 
@@ -37,6 +39,12 @@ with open("data_good.json", "w") as f:
 print(f"data_unfiltered: {len(data_unfiltered)}")
 with open("data_unfiltered.json", "w") as f:
 	json.dump(data_unfiltered, f, indent=4)
+
+data_61 = data_good * 6 + data_unfiltered
+random.shuffle(data_61)
+print(f"data_61: {len(data_61)}")
+with open("data_61.json", "w") as f:
+	json.dump(data_61, f, indent=4)
 
 # with open("data_good.json", "r") as f:
 # 	re = json.load(f)

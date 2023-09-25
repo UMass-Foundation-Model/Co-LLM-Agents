@@ -172,7 +172,7 @@ class LLM:
 				else:
 					input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to('cuda')
 				prompt_len = input_ids.shape[-1]
-				output_dict = self.model.generate(input_ids, pad_token_id=self.tokenizer.eos_token_id # max_length=prompt_len + sampling_params['max_new_tokens'],
+				output_dict = self.model.generate(input_ids, pad_token_id=self.tokenizer.eos_token_id, # max_length=prompt_len + sampling_params['max_new_tokens'],
 											 **sampling_params)
 				generated_samples = self.tokenizer.batch_decode(output_dict.sequences[:, prompt_len:])
 				generated_samples = [s.strip() for s in generated_samples]

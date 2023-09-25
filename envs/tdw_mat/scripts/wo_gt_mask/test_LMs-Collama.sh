@@ -1,4 +1,4 @@
-lm_id=Collama-13b-chat-lora-0922
+lm_id=Collama-13b-chat-lora
 port=20006
 pkill -f -9 "port $port"
 

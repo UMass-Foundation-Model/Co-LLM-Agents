@@ -25,15 +25,15 @@ else
     verbose_output="--disable_verbose True"
 fi
 
-TOTAL_BATCH_SIZE=768
+TOTAL_BATCH_SIZE=384
 LEARNING_RATE=4e-4
-NUM_EPOCHS=1
+NUM_EPOCHS=40
 CKPT_STEPS=50
 
-MICRO_BATCH_SIZE=8
+MICRO_BATCH_SIZE=4
 GRADIENT_ACCUMULATION_STEPS=$(($TOTAL_BATCH_SIZE / $MICRO_BATCH_SIZE / $TOTAL_NUM_GPUS))
 
-source /gpfs/u/home/AICD/AICDsnzh/.bashrc
+source /gpfs/u/home/AICD/AICDhnng/.bashrc-ppl
 conda activate /gpfs/u/home/AICD/AICDsnzh/scratch/conda_envs/dromedary_ppc
 
 accelerate launch \
@@ -41,19 +41,19 @@ accelerate launch \
     --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT \
     --deepspeed_multinode_launcher "standard" \
     finetune.py \
-    --num_warmup_steps 100 \
     --batch_size $TOTAL_BATCH_SIZE \
     --micro_batch_size $MICRO_BATCH_SIZE \
     --learning_rate $LEARNING_RATE \
     --num_epochs $NUM_EPOCHS \
     --ds_gradient_accumulation_steps $GRADIENT_ACCUMULATION_STEPS \
-    --base_model "/gpfs/u/home/AICD/AICDsnzh/scratch-shared/llama_zf/llama-2-13b-chat-hf" \
+    --base_model "/gpfs/u/home/AICD/AICDhnng/scratch-shared/llama_zf/llama-2-13b-chat-hf" \
     --output_dir "$MODEL_DIR/Collama-13b-chat-lora" \
     --run_tensorboard_dir True \
     --checkpointing_steps $CKPT_STEPS \
     --resume_from_checkpoint True \
-    --data_path "$DATA_DIR/data.json" \
-    --cutoff_len 1024 \
+    --data_path "$DATA_DIR/data_good.json" \
+    --cutoff_len 2048 \
+    --val_set_size 10 \
     --train_on_inputs False \
     --lora_target_modules='[q_proj,k_proj,v_proj,o_proj,gate_proj,down_proj,up_proj]' \
     --lora_r=64
