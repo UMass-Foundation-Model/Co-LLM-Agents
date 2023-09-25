@@ -115,7 +115,7 @@ lora_model.save_pretrained(args.save_dir)
 print(f"merged and saved to {args.save_dir}")
 
 model = LlamaForCausalLM.from_pretrained(
-			args.lora_weights,
+			args.save_dir,
 			device_map='auto',
 			load_in_4bit=True,
 		)
