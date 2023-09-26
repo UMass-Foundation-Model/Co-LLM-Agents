@@ -3,7 +3,7 @@ pkill -f -9 "port $port"
 
 python3 tdw-gym/challenge.py \
 --output_dir results \
---experiment_name vision-single \
+--experiment_name vision-H \
 --run_id run_2 \
 --port $port \
 --agents h_agent \
