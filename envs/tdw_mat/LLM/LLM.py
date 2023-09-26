@@ -10,7 +10,7 @@ from openai.error import OpenAIError
 import backoff
 import torch
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM, LlamaTokenizer
 
 class LLM:
 	def __init__(self,
@@ -68,8 +68,8 @@ class LLM:
 					"echo": sampling_parameters.echo,
 				}
 		elif self.source == 'hf':
-			self.tokenizer = AutoTokenizer.from_pretrained(self.lm_id, use_fast=True)
-			self.model = AutoModelForCausalLM.from_pretrained(self.lm_id, device_map='auto', load_in_4bit=True)
+			self.tokenizer = LlamaTokenizer.from_pretrained(self.lm_id, use_fast=True)
+			self.model = LlamaForCausalLM.from_pretrained(self.lm_id, device_map='auto', load_in_4bit=True)
 			self.sampling_params = {
 				"max_new_tokens": sampling_parameters.max_tokens,
 				"temperature": sampling_parameters.t,
@@ -172,7 +172,7 @@ class LLM:
 				else:
 					input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to('cuda')
 				prompt_len = input_ids.shape[-1]
-				output_dict = self.model.generate(input_ids, # max_length=prompt_len + sampling_params['max_new_tokens'],
+				output_dict = self.model.generate(input_ids, pad_token_id=self.tokenizer.eos_token_id, # max_length=prompt_len + sampling_params['max_new_tokens'],
 											 **sampling_params)
 				generated_samples = self.tokenizer.batch_decode(output_dict.sequences[:, prompt_len:])
 				generated_samples = [s.strip() for s in generated_samples]
@@ -480,7 +480,7 @@ class LLM:
 				outputs, usage = self.generator(chat_prompt if self.chat else gen_prompt, self.sampling_params)
 				self.total_cost += usage
 				message = outputs[0]
-				if message[0]!='"':
+				if len(message) > 0 and message[0] != '"':
 					message = re.search(r'"([^"]+)"', message)
 					if message:
 						message = '"' + message.group(1) + '"'
