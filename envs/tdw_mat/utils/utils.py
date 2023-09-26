@@ -101,6 +101,28 @@ def eval_EI(single_log_dir, log_dir, eval_episodes, result_path):
     print(f"average\t{np.mean(transport_rate):.2f}\t{np.mean(EI):.2f}", file=fout)
     print(f"average\t{np.mean(transport_rate):.2f}\t{np.mean(EI):.2f}")
 
+def eval_individual(single_log_dir, log_dir, eval_episodes, dataset_config):
+    # different task
+    for task in ['food', 'stuff']:
+        task_episodes = []
+        for i in range(len(dataset_config)):
+            if dataset_config[i]['task'] == task:
+                task_episodes.append(i)
+        task_episodes = [i for i in task_episodes if i in eval_episodes]
+        eval_EI(single_log_dir, log_dir, task_episodes, f'results_{task}.tsv')
+    # differnt container
+    container_mapping = {
+        'enough': '0',
+        'rare': '1'
+    }
+    for container in ['enough', 'rare']:
+        container_episodes = []
+        for i in range(len(dataset_config)):
+            if dataset_config[i]['layout'].split("_")[-1] == container_mapping[container]:
+                container_episodes.append(i)
+        container_episodes = [i for i in container_episodes if i in eval_episodes]
+        eval_EI(single_log_dir, log_dir, container_episodes, f'results_{container}.tsv')
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--LLM_filter", action='store_true', help="Extract LLM prompts and outputs from log files.")
@@ -114,9 +136,12 @@ if __name__ == "__main__":
     parser.add_argument("--eval_episodes", nargs='+', default=(-1,), type=int)
     parser.add_argument("--single_log_dir", type=str, default="results/LM-Llama-2-13b-hf")
     parser.add_argument("--eval_comm", action='store_true', help="calculate number of the comm")
+    parser.add_argument("--eval_individual", action='store_true', help="calculate transport rate of individual cases, such as enough / rare container cases and food / stuff cases")
+    parser.add_argument("--dataset_config_path", type=str, default = "dataset/dataset_test/test_env.json")
     args = parser.parse_args()
     log_dir = args.log_dir
-    eval_episodes = range(24)
+    dataset_config = json.load(open(args.dataset_config_path, 'r'))
+    eval_episodes = range(len(dataset_config))
     if args.eval_episodes[0] != -1:
         eval_episodes = args.eval_episodes
     if args.LLM_filter:
@@ -129,3 +154,5 @@ if __name__ == "__main__":
         log_path = os.path.join(log_dir, args.log_path)
         output_path = os.path.join(log_dir, args.output_path)
         LLM_filter(log_path, output_path, args.type, eval_episodes, True)
+    if args.eval_individual:
+        eval_individual(args.single_log_dir, log_dir, eval_episodes, dataset_config)
