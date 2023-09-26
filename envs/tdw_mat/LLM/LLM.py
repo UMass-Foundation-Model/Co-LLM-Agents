@@ -221,7 +221,7 @@ class LLM:
 			action = available_actions[i]
 			if action.startswith("send a message:"):
 				action = "send a message"
-			if action in text:
+			if action.lower() in text.lower():
 				return available_actions[i], flags
 		sents = text.split('\n')  # Split by space
 		words = []
@@ -237,6 +237,32 @@ class LLM:
 				return action, flags
 		print("WARNING! Fuzzy match!")
 		flags = "Fuzzy match"
+		for i in range(len(available_actions)):
+			action = available_actions[i]
+			if self.communication and i == 0:
+				continue
+			act = "None"
+			name = "None"
+			id = "None"
+			if action.startswith('go to'):
+				# act = 'go to'
+				name = action.split(' ')[-2][1:-1]
+				id = action.split(' ')[-1][1:-1]
+			elif action.startswith('explore'):
+				act = 'explore'
+				name = action.split(' ')[-2][1:-1]
+				id = action.split(' ')[-1][1:-1]
+			elif action.startswith('go grasp'):
+				act = 'grasp'
+				name = action.split(' ')[-2][1:-1]
+				id = action.split(' ')[-1][1:-1]
+			elif action.startswith('put'):
+				act = 'put'
+			elif action.startswith('transport'):
+				act = 'transport'
+			option = chr(ord('A') + i)
+			if name in text and id in text:
+				return action, flags
 		for i in range(len(available_actions)):
 			action = available_actions[i]
 			if self.communication and i == 0:
