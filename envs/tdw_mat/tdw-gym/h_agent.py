@@ -305,7 +305,7 @@ class H_agent:
         d = self.l2_distance((x, z), (gx, gz))
         self.d = d
         if 'belongs_to_which_room' in self.env_api and self.sub_goal == 2:
-            flag = self.env_api['belongs_to_which_room'](np.array([x, 0, z])) == self.env_api['belongs_to_which_room'](np.array([x, 0, z]))
+            flag = self.env_api['belongs_to_which_room'](np.array([x, 0, z])) == self.env_api['belongs_to_which_room'](np.array([gx, 0, gz]))
         else:
             flag = True
         return d < thresold and flag
