@@ -94,6 +94,8 @@ class lm_agent:
         self.oppo_holding_objects_id = None
         self.oppo_last_room = None
         self.rotated = None
+        self.navigation_threshold = 5
+        self.detection_threshold = 5
 
 
     def pos2map(self, x, z):
@@ -264,7 +266,7 @@ class lm_agent:
                     filter_depth[i, j] = 1e9
         depth = filter_depth
         #depth_img = Image.fromarray(100 / depth).convert('RGB')
-        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.steps}_depth_filter.png')
+        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.num_step}_depth_filter.png')
 
         #camera info
         FOV = self.obs['FOV']
@@ -304,8 +306,8 @@ class lm_agent:
         Z = np.rint((rpc[2, :] - self._scene_bounds["z_min"]) / CELL_SIZE)
         Z = np.maximum(Z, 0)
         Z = np.minimum(Z, self.map_size[1] - 1)
-
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] < 1.5))
+        
+        index = np.where((depth > 0) & (depth < self.detection_threshold) & (rpc[1, :] < 1.5))
         XX = X[index].copy()
         ZZ = Z[index].copy()
         XX = XX.astype(np.int32)
@@ -313,14 +315,14 @@ class lm_agent:
         local_known_map[XX, ZZ] = 1
 
         # It may be necessary to remove the object from the occupancy map
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
         XX = X[index].copy()
         ZZ = Z[index].copy()
         XX = XX.astype(np.int32)
         ZZ = ZZ.astype(np.int32)
         self.occupancy_map[XX, ZZ] = 0
 
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
         XX = X[index]
         ZZ = Z[index]
         XX = XX.astype(np.int32)
@@ -328,7 +330,7 @@ class lm_agent:
         self.occupancy_map[XX, ZZ] = 1
         self.local_occupancy_map[XX, ZZ] = 1
 
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
         XX = X[index]
         ZZ = Z[index]
         XX = XX.astype(np.int32)
