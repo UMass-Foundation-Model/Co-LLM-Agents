@@ -355,6 +355,9 @@ class lm_agent:
         x, _, z = self.obs["agent"][:3]
         gx, _, gz = target_pos
         d = self.l2_distance((x, z), (gx, gz))
+        if self.plan.startswith('transport'):
+            if self.env_api['belongs_to_which_room'](np.array([x, 0, z])) != self.env_api['belongs_to_which_room'](np.array([gx, 0, gz])):
+                return False
         return d < threshold
 
     def conv2d(self, map, kernel=3):
@@ -420,7 +423,7 @@ class lm_agent:
         self.dropping_object = []
         self.steps = 0
         self.num_frames = 0
-        print(self.obs.keys())
+        # print(self.obs.keys())
         self.position = self.obs["agent"][:3]
         self.forward = self.obs["agent"][3:]
         self.current_room = self.env_api['belongs_to_which_room'](self.position)
@@ -440,7 +443,7 @@ class lm_agent:
             # so we put the import here
             self.detection_model = init_detection()
         self.navigation_threshold = 5
-        print(self.rooms_name)
+        # print(self.rooms_name)
         self.LLM.reset(self.rooms_name, self.goal_objects)
         self.save_img = save_img
 
