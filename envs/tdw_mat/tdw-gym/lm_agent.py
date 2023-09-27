@@ -94,6 +94,8 @@ class lm_agent:
         self.oppo_holding_objects_id = None
         self.oppo_last_room = None
         self.rotated = None
+        self.navigation_threshold = 5
+        self.detection_threshold = 5
 
 
     def pos2map(self, x, z):
@@ -244,14 +246,10 @@ class lm_agent:
 
     def color2id_fc(self, color):
         if color not in self.color2id:
-            if color == (0, 0, 0):
+            if (color != self.agent_color).any(): 
                 return -100 # wall
             else: return self.agent_id # agent
-        else: 
-            if self.color2id[color] in [0, 1]:
-                return self.agent_id
-            else: 
-                return self.color2id[color]
+        else: return self.color2id[color]
 
     def dep2map(self):
         local_known_map = np.zeros_like(self.occupancy_map, np.int32)
@@ -264,7 +262,7 @@ class lm_agent:
                     filter_depth[i, j] = 1e9
         depth = filter_depth
         #depth_img = Image.fromarray(100 / depth).convert('RGB')
-        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.steps}_depth_filter.png')
+        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.num_step}_depth_filter.png')
 
         #camera info
         FOV = self.obs['FOV']
@@ -304,8 +302,8 @@ class lm_agent:
         Z = np.rint((rpc[2, :] - self._scene_bounds["z_min"]) / CELL_SIZE)
         Z = np.maximum(Z, 0)
         Z = np.minimum(Z, self.map_size[1] - 1)
-
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] < 1.5))
+        
+        index = np.where((depth > 0) & (depth < self.detection_threshold) & (rpc[1, :] < 1.5))
         XX = X[index].copy()
         ZZ = Z[index].copy()
         XX = XX.astype(np.int32)
@@ -313,14 +311,14 @@ class lm_agent:
         local_known_map[XX, ZZ] = 1
 
         # It may be necessary to remove the object from the occupancy map
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
         XX = X[index].copy()
         ZZ = Z[index].copy()
         XX = XX.astype(np.int32)
         ZZ = ZZ.astype(np.int32)
         self.occupancy_map[XX, ZZ] = 0
 
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
         XX = X[index]
         ZZ = Z[index]
         XX = XX.astype(np.int32)
@@ -328,7 +326,7 @@ class lm_agent:
         self.occupancy_map[XX, ZZ] = 1
         self.local_occupancy_map[XX, ZZ] = 1
 
-        index = np.where((depth > 0) & (depth < 5) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
+        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
         XX = X[index]
         ZZ = Z[index]
         XX = XX.astype(np.int32)
@@ -381,10 +379,12 @@ class lm_agent:
                                   (g_i, g_j), allow_diagonal=False)
         return path
 
-    def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, gt_mask = True, save_img = True):
+    def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, agent_color = [-1, -1, -1], agent_id = 0, gt_mask = True, save_img = True):
         self.invalid_count = 0
         self.obs = obs
         self.env_api = env_api
+        self.agent_color = agent_color
+        self.agent_id = agent_id
         self.rooms_name = rooms_name
         self.room_distance = 0
         assert type(goal_objects) == dict
@@ -465,16 +465,14 @@ class lm_agent:
             action = {"type": 2}
         return action
 
-
     def draw_map(self, previous_name):
-        #DWH: draw the map
         draw_map = np.zeros((self.map_size[0], self.map_size[1], 3))
         for i in range(self.map_size[0]):
             for j in range(self.map_size[1]):
                 if self.occupancy_map[i, j] > 0:
                     draw_map[i, j] = 100
                 if self.known_map[i, j] == 0:
-                    assert self.occupancy_map[i, j] == 0
+                #    assert self.occupancy_map[i, j] == 0
                     draw_map[i, j] = 50
                 if self.wall_map[i, j] > 0:
                     draw_map[i, j] = 150
@@ -487,6 +485,7 @@ class lm_agent:
         #rotate the map 90 degrees anti-clockwise
         draw_map = np.rot90(draw_map, 1)
         cv2.imwrite(previous_name + '_map.png', draw_map)
+        #cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
 
     def gotoroom(self):
         target_room = ' '.join(self.plan.split(' ')[2: 4])
@@ -750,5 +749,3 @@ class lm_agent:
             self.logger.debug(info)
         self.last_action = action
         return action
-
-
