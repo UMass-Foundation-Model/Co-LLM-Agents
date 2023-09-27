@@ -1,7 +1,11 @@
 import cv2
 import os
+import argparse
 
 def images_to_video(image_folder, video_name, fps):
+    r'''
+        support both first view and top-down view
+    '''
     images = [img for img in os.listdir(image_folder) if (img.endswith(".png") or img.endswith(".jpg")) and not img.endswith("seg.png") and not img.endswith("depth.png") and not img.endswith("map.png") and not img.endswith("filter.png")]
 
     if images[0].endswith(".png"):
@@ -19,8 +23,10 @@ def images_to_video(image_folder, video_name, fps):
 
     video.release()
 
-image_folder = 'results/vision-HH/run_1/0/top_down_image'  #img path
-video_name = 'video.avi'
-fps = 60
-
-images_to_video(image_folder, video_name, fps)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--image_folder", type=str, help="image path", default="results/vision-LMs-gpt-4/run_2/0/top_down_image")
+    parser.add_argument("--video_name", type=str, default="video.avi")
+    parser.add_argument("--fps", type=int, default=60)
+    args = parser.parse_args()
+    images_to_video(args.image_folder, args.video_name, args.fps)

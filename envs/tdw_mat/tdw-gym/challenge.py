@@ -66,7 +66,7 @@ class Challenge:
                     if agent.agent_type == 'h_agent':
                         agent.reset(goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(episode)), env_api = curr_api, agent_color = info['agent_colors'][id], agent_id = id, gt_mask = self.gt_mask, save_img = self.save_img)
                     elif agent.agent_type == 'lm_agent':
-                        agent.reset(obs = state[str(id)], goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(episode)), env_api = curr_api, rooms_name=info['rooms_name'], gt_mask = self.gt_mask, save_img = self.save_img)
+                        agent.reset(obs = state[str(id)], goal_objects = info['goal_description'], output_dir = os.path.join(self.output_dir, str(episode)), env_api = curr_api, agent_color = info['agent_colors'][id], agent_id = id, rooms_name=info['rooms_name'], gt_mask = self.gt_mask, save_img = self.save_img)
                     else:
                         raise Exception(f"{agent.agent_type} not available")
                 else:

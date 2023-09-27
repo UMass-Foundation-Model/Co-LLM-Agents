@@ -246,14 +246,10 @@ class lm_agent:
 
     def color2id_fc(self, color):
         if color not in self.color2id:
-            if color == (0, 0, 0):
+            if (color != self.agent_color).any(): 
                 return -100 # wall
             else: return self.agent_id # agent
-        else: 
-            if self.color2id[color] in [0, 1]:
-                return self.agent_id
-            else: 
-                return self.color2id[color]
+        else: return self.color2id[color]
 
     def dep2map(self):
         local_known_map = np.zeros_like(self.occupancy_map, np.int32)
@@ -359,6 +355,9 @@ class lm_agent:
         x, _, z = self.obs["agent"][:3]
         gx, _, gz = target_pos
         d = self.l2_distance((x, z), (gx, gz))
+        if self.plan.startswith('transport'):
+            if self.env_api['belongs_to_which_room'](np.array([x, 0, z])) != self.env_api['belongs_to_which_room'](np.array([gx, 0, gz])):
+                return False
         return d < threshold
 
     def conv2d(self, map, kernel=3):
@@ -383,10 +382,12 @@ class lm_agent:
                                   (g_i, g_j), allow_diagonal=False)
         return path
 
-    def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, gt_mask = True, save_img = True):
+    def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, agent_color = [-1, -1, -1], agent_id = 0, gt_mask = True, save_img = True):
         self.invalid_count = 0
         self.obs = obs
         self.env_api = env_api
+        self.agent_color = agent_color
+        self.agent_id = agent_id
         self.rooms_name = rooms_name
         self.room_distance = 0
         assert type(goal_objects) == dict
@@ -422,7 +423,7 @@ class lm_agent:
         self.dropping_object = []
         self.steps = 0
         self.num_frames = 0
-        print(self.obs.keys())
+        # print(self.obs.keys())
         self.position = self.obs["agent"][:3]
         self.forward = self.obs["agent"][3:]
         self.current_room = self.env_api['belongs_to_which_room'](self.position)
@@ -442,7 +443,7 @@ class lm_agent:
             # so we put the import here
             self.detection_model = init_detection()
         self.navigation_threshold = 5
-        print(self.rooms_name)
+        # print(self.rooms_name)
         self.LLM.reset(self.rooms_name, self.goal_objects)
         self.save_img = save_img
 
@@ -467,16 +468,14 @@ class lm_agent:
             action = {"type": 2}
         return action
 
-
     def draw_map(self, previous_name):
-        #DWH: draw the map
         draw_map = np.zeros((self.map_size[0], self.map_size[1], 3))
         for i in range(self.map_size[0]):
             for j in range(self.map_size[1]):
                 if self.occupancy_map[i, j] > 0:
                     draw_map[i, j] = 100
                 if self.known_map[i, j] == 0:
-                    assert self.occupancy_map[i, j] == 0
+                #    assert self.occupancy_map[i, j] == 0
                     draw_map[i, j] = 50
                 if self.wall_map[i, j] > 0:
                     draw_map[i, j] = 150
@@ -489,6 +488,7 @@ class lm_agent:
         #rotate the map 90 degrees anti-clockwise
         draw_map = np.rot90(draw_map, 1)
         cv2.imwrite(previous_name + '_map.png', draw_map)
+        #cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
 
     def gotoroom(self):
         target_room = ' '.join(self.plan.split(' ')[2: 4])
@@ -752,5 +752,3 @@ class lm_agent:
             self.logger.debug(info)
         self.last_action = action
         return action
-
-

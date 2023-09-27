@@ -171,3 +171,6 @@ nohup.out
 
 CoLlama/*.json
 CoLlama/*.csv
+
+final_results
+results_json
