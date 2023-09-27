@@ -168,3 +168,6 @@ captured*/
 nohup.out
 *.avi
 *.zip
+
+CoLlama/*.json
+CoLlama/*.csv
