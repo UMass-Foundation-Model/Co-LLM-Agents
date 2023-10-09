@@ -4,7 +4,7 @@ pkill -f -9 "port $port"
 python3 tdw-gym/challenge.py \
 --output_dir results \
 --experiment_name H \
---run_id run_2 \
+--run_id run_1 \
 --port $port \
 --agents h_agent \
 --max_frames 3000 \
