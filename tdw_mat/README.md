@@ -88,7 +88,7 @@ The configuration and distribution of containers vary based on two distinct sett
 
 One example of scenes, target objects, and containers is shown in the following image:
 
-![task_description_tdw](../../assets/task_description_tdw.png)
+![task_description_tdw](../assets/tdw_env.png)
 
 ### Metrics
 

@@ -69,11 +69,11 @@ pip install -r requirements.txt
 
 ## Run Experiments
 
-The main implementation code of our _COELA_ is in `tdw_mat/LLM` and `tdw_mat/tdw_gym/lm_agent.py`.
+The main implementation code of our _CoELA_ is in `tdw_mat/LLM` and `tdw_mat/tdw_gym/lm_agent.py`.
 
-We also prepare example scripts to run experiments with HP baseline and our _COELA_ under the folder `tdw_mat/scripts`.
+We also prepare example scripts to run experiments with HP baseline and our _CoELA_ under the folder `tdw_mat/scripts`.
 
-For example, to run experiments with two _COELA_ on `ThreeDWorld Multi-Agent Transport`, run the following command in folder `tdw_mat`.
+For example, to run experiments with two _CoELA_ on `ThreeDWorld Multi-Agent Transport`, run the following command in folder `tdw_mat`.
 
 ```
 ./scripts/test_LMs-gpt-4.sh
@@ -81,7 +81,7 @@ For example, to run experiments with two _COELA_ on `ThreeDWorld Multi-Agent Tra
 
 ## Environment Details
 
-### ThreeDWorld Multi-Agent Transport(TDW-MAT)
+### ThreeDWorld Multi-Agent Transport (TDW-MAT)
 
 We extend the [ThreeDWorld Transport Challenge](https://arxiv.org/abs/2103.14025) into a multi-agent setting with more types of objects and containers, more realistic object placements, and support communication between agents, named ThreeDWorld Multi-Agent Transport (TDW-MAT), built on top of the [TDW platform](https://www.threedworld.org/). 
 
@@ -97,14 +97,14 @@ The configuration and distribution of containers vary based on two distinct sett
 
 One example of scenes, target objects, and containers is shown in the following image:
 
-![task_description_tdw](assets/task_description_tdw.png)
+![tdw_mat](assets/tdw_env.png)
 
 #### Metrics
 
   - **Transport Rate (TR)**: The fraction of the target objects successfully transported to the goal position.
   - **Efficiency Improvements (EI)**: The efficiency improvements of cooperating with base agents.
 
-### Communicative Watch-And-Help(C-WAH)
+### Communicative Watch-And-Help (C-WAH)
 
 Communicative Watch-And-Help(C-WAH) is an extension of the [Watch-And-Help challenge](https://github.com/xavierpuigf/watch_and_help), which enables agents to send messages to each other. Sending messages, alongside other actions, takes one timestep and has an upper limit on message length.
 
