@@ -8,6 +8,8 @@ from tdw.version import __version__
 from tdw.controller import Controller
 from tdw.tdw_utils import TDWUtils
 from tdw.add_ons.floorplan import Floorplan
+from tdw.add_ons.replicant import Replicant
+from tdw.librarian import HumanoidLibrarian
 from tdw.add_ons.occupancy_map import OccupancyMap
 from tdw.add_ons.interior_scene_lighting import InteriorSceneLighting
 from tdw.add_ons.object_manager import ObjectManager
@@ -67,8 +69,8 @@ class TransportChallenge(AssetCachedController):
         try:
             q = run(["git", "rev-parse", "--show-toplevel"], stdout=PIPE)
             p = Path(str(q.stdout.decode("utf-8").strip())).resolve()
-            if p.stem != "transport_challenge_multi_agent":
-                print("Warning! You might be using code copied from the transport_challenge_multi_agent repo. Your code might be out of date.\n")
+            if p.stem != "Co-LLM-Agents":
+                print("Warning! You might be using code copied from the Co-LLM-Agents repo. Your code might be out of date.\n")
         except OSError:
             pass
         if TransportChallenge.TDW_VERSION != __version__:
@@ -132,6 +134,8 @@ class TransportChallenge(AssetCachedController):
         # Sett whether we need to scale IK motion duration.
         Globals.SCALE_IK_DURATION = self._is_standalone
         self.enable_collision_detection = enable_collision_detection
+        # Add two replicants: Alice and Bob.
+        self.HUMANOID_LIBRARIANS[Replicant.LIBRARY_NAME] = HumanoidLibrarian("transport_challenge_multi_agent/replicants.json")
 
     def start_floorplan_trial(self, scene: str, layout: int, num_containers: int, num_target_objects: int,
                               container_room_index: int = None, target_objects_room_index: int = None,
@@ -270,13 +274,16 @@ class TransportChallenge(AssetCachedController):
                 replicant_positions[i] = count_and_position[str(i)]
             count_and_position[str(i)] = replicant_positions[i]
             
+        replicant_names = ["man_suit_edited", "replicant_0"]
         for i, replicant_position in enumerate(replicant_positions):
+            replicant_name = replicant_names[i]
             replicant = ReplicantTransportChallenge(replicant_id=i,
                                                     state=self.state,
                                                     position=replicant_position,
                                                     image_frequency=self._image_frequency,
                                                     target_framerate=self._target_framerate,
-                                                    enable_collision_detection=self.enable_collision_detection)
+                                                    enable_collision_detection=self.enable_collision_detection,
+                                                    name=replicant_name)
             self.replicants[replicant.replicant_id] = replicant
             self.add_ons.append(replicant)
         # Set the pass masks.
