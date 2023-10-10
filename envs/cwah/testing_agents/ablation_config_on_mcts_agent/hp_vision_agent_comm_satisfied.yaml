@@ -1,8 +1,0 @@
-# hp_vision_comm_all.yaml
-  num_tries: 5
-  num_per_task: 2
-  mode: 'hp_vision_comm_satisfied'
-  obs_type: 'normal_image'
-  opponent_subgoal: 'None'
-  satisfied_comm: True
-  belief_comm: False

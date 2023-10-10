@@ -1,0 +1,8 @@
+# single_vision_agent_full.yaml
+  num_tries: 5
+  num_per_task: 10
+  mode: 'hp_vision'
+  obs_type: 'normal_image'
+  opponent_subgoal: 'None'
+  satisfied_comm: False
+  belief_comm: False

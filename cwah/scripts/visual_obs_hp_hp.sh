@@ -1,0 +1,1 @@
+python testing_agents/test_vision_hps.py --config hp_vision_agent_full
