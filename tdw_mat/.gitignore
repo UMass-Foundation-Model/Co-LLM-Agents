@@ -168,7 +168,7 @@ captured*/
 nohup.out
 *.avi
 *.zip
-
+utils/render/figure_2/*
 CoLlama/*.json
 CoLlama/*.csv
 
