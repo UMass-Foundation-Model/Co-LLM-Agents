@@ -21,8 +21,8 @@ gym.envs.registration.register(
 )
 
 class Challenge:
-    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, screen_size = 512, data_prefix = 'dataset/nips_dataset/', gt_mask = True, save_img = True):
-        self.env = gym.make("transport_challenge_MA", port = port, number_of_agents = number_of_agents, save_dir = output_dir, max_frames = max_frames, new_setting = new_setting, screen_size = screen_size, data_prefix = data_prefix, gt_mask = gt_mask)
+    def __init__(self, logger, port, data_path, output_dir, number_of_agents = 2, max_frames = 3000, new_setting = True, launch_build = True, screen_size = 512, data_prefix = 'dataset/nips_dataset/', gt_mask = True, save_img = True):
+        self.env = gym.make("transport_challenge_MA", port = port, number_of_agents = number_of_agents, save_dir = output_dir, max_frames = max_frames, new_setting = new_setting, launch_build = launch_build, screen_size = screen_size, data_prefix = data_prefix, gt_mask = gt_mask)
         self.gt_mask = gt_mask
         self.logger = logger
         self.logger.debug(port)
@@ -138,6 +138,7 @@ def main():
     parser.add_argument("--eval_episodes", nargs='+', default=(-1,), type=int, help="which episodes to evaluate on")
     parser.add_argument("--max_frames", default=3000, type=int, help="max frames per episode")
     parser.add_argument("--new_setting", default=True, action='store_true')
+    parser.add_argument("--no_launch_build", action='store_true')
     parser.add_argument("--communication", action='store_true')
     parser.add_argument("--debug", action='store_true')
     parser.add_argument("--no_gt_mask", action='store_true')
@@ -168,7 +169,7 @@ def main():
     os.makedirs(args.output_dir, exist_ok = True)
     logger = init_logs(args.output_dir)
 
-    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, screen_size = args.screen_size, save_img = not args.no_save_img)
+    challenge = Challenge(logger, args.port, args.data_path, args.output_dir, args.number_of_agents, args.max_frames, args.new_setting, not args.no_launch_build, screen_size = args.screen_size, data_prefix=args.data_prefix, gt_mask = not args.no_gt_mask, save_img = not args.no_save_img)
     agents = []
     for i, agent in enumerate(args.agents):
         if agent == 'h_agent':
