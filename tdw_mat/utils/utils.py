@@ -134,7 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("--eval_EI", action='store_true', help="calculate EI")
     parser.add_argument("--runs", nargs='+', default=(1, 2, 3, 4, 5), type=int)
     parser.add_argument("--eval_episodes", nargs='+', default=(-1,), type=int)
-    parser.add_argument("--single_log_dir", type=str, default="results/LM-Llama-2-13b-hf")
+    parser.add_argument("--single_log_dir", type=str)
     parser.add_argument("--eval_comm", action='store_true', help="calculate number of the comm")
     parser.add_argument("--eval_individual", action='store_true', help="calculate transport rate of individual cases, such as enough / rare container cases and food / stuff cases")
     parser.add_argument("--dataset_config_path", type=str, default = "dataset/dataset_test/test_env.json")

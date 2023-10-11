@@ -25,7 +25,7 @@ def images_to_video(image_folder, video_name, fps):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image_folder", type=str, help="image path", default="results/vision-LMs-gpt-4/run_2/0/top_down_image")
+    parser.add_argument("--image_folder", type=str, help="image path")
     parser.add_argument("--video_name", type=str, default="video.avi")
     parser.add_argument("--fps", type=int, default=60)
     args = parser.parse_args()

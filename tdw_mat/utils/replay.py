@@ -22,7 +22,7 @@ c = Controller(port=10001)
 log_playback = LogPlayback()
 c.add_ons.append(log_playback)
 # Load the commands.
-log_playback.load(path="results/llm_llm_comm_seed_0/10/action_log_v1.log")
+log_playback.load()
 # Play back each list of commands.
 frame = 0
 while len(log_playback.playback) > 0:
@@ -32,7 +32,7 @@ while len(log_playback.playback) > 0:
         if r_id == 'imag':
             images = Images(data[i])
             if images.get_avatar_id() == "a" and (frame) % 1 == 0:
-                TDWUtils.save_images(images=images, filename= f"{frame:05d}", output_directory = os.path.join('replay/replay_10_arxiv', 'images'))
+                TDWUtils.save_images(images=images, filename= f"{frame:05d}", output_directory = os.path.join('replay', 'images'))
     frame += 1
     print(frame)
 c.communicate({"$type": "terminate"})
