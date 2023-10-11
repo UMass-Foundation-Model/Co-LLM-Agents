@@ -40,7 +40,7 @@ def might_fail_launch(launch, port = None):
         print("kill failure launch ...", f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
         os.system(f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(15)  
+    signal.alarm(15)
     try:
         print("Trying to launch tdw ...")
         return launch()
@@ -49,7 +49,7 @@ def might_fail_launch(launch, port = None):
 
 class TDW(Env):
     def __init__(self, port = 1071, number_of_agents = 1, demo=False, rank=0, num_scenes = 0, train=False, \
-                        screen_size = 512, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 2000, new_setting = True, data_prefix = 'dataset/nips_dataset/'):
+                        screen_size = 512, exp = False, launch_build=True, gt_occupancy = False, gt_mask = True, enable_collision_detection = False, save_dir = 'results', max_frames = 3000, data_prefix = 'dataset/nips_dataset/'):
         self.messages = None
         self.data_prefix = data_prefix
         self.replicant_colors = None
@@ -81,7 +81,6 @@ class TDW(Env):
         self.screen_size = screen_size
         self.launch_build = launch_build
         self.enable_collision_detection = enable_collision_detection
-        self.new_setting = new_setting
         self.controller = None
         self.message_per_frame = 500
         rgb_space = gym.spaces.Box(0, 256,
@@ -207,7 +206,7 @@ class TDW(Env):
             self.controller.communicate({"$type": "terminate"})
             self.controller.socket.close()
         # download_asset_bundles()
-        self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, new_setting=self.new_setting, logger_dir = output_dir), port = self.port)
+        self.controller = might_fail_launch(partial(TransportChallenge, port=self.port, check_version=True, launch_build=self.launch_build, screen_width=self.screen_size,screen_height=self.screen_size, image_frequency= ImageFrequency.always, png=True, image_passes=None, enable_collision_detection = self.enable_collision_detection, logger_dir = output_dir), port = self.port)
         print("Controller connected")
         self.success = False
         self.messages = [None for _ in range(self.number_of_agents)]
@@ -231,13 +230,6 @@ class TDW(Env):
         # Now the scene is fixed, so num_containers and num_target_objects are not used anymore in new settings
         self.controller.start_floorplan_trial(scene=scene, layout=layout, replicants=self.number_of_agents, num_containers=4, num_target_objects=10,
                                    random_seed=seed, task = task, data_prefix = self.data_prefix)
-        
-        if not self.new_setting:
-            # Add a third-person camera.
-            camera = ThirdPersonCamera(avatar_id="a",
-                                   position={"x": 0, "y": 25, "z": 0},
-                                   look_at={"x": 0, "y": -25, "z": 0})
-            self.controller.add_ons.append(camera)
 
         # Add a gt occupancy map. In the standard setting, we don't need this
         if self.gt_occupancy:

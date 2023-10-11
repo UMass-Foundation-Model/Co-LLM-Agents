@@ -53,7 +53,7 @@ class TransportChallenge(AssetCachedController):
 
     def __init__(self, port: int = 1071, check_version: bool = True, launch_build: bool = True, screen_width: int = 256,
                  screen_height: int = 256, image_frequency: ImageFrequency = ImageFrequency.once, png: bool = True, asset_cache_dir = "transport_challenge_asset_bundles",
-                 image_passes: List[str] = None, target_framerate: int = 250, enable_collision_detection: bool = False, new_setting = False, logger_dir = None):
+                 image_passes: List[str] = None, target_framerate: int = 250, enable_collision_detection: bool = False, logger_dir = None):
         """
         :param port: The socket port used for communicating with the build.
         :param check_version: If True, the controller will check the version of the build and print the result.
@@ -122,7 +122,6 @@ class TransportChallenge(AssetCachedController):
         else:
             self._image_passes: List[str] = image_passes
         self._target_framerate: int = target_framerate
-        self.new_setting = new_setting
         # Initialize the window and rendering.
         self.communicate([{"$type": "set_screen_size",
                            "width": screen_width,
@@ -134,14 +133,13 @@ class TransportChallenge(AssetCachedController):
         # Sett whether we need to scale IK motion duration.
         Globals.SCALE_IK_DURATION = self._is_standalone
         self.enable_collision_detection = enable_collision_detection
-        # Add two replicants: Alice and Bob.
-        self.HUMANOID_LIBRARIANS[Replicant.LIBRARY_NAME] = HumanoidLibrarian("transport_challenge_multi_agent/replicants.json")
-
+        # # Use Humanoid librian as default
+        # self.HUMANOID_LIBRARIANS[Replicant.LIBRARY_NAME] = HumanoidLibrarian("humanoids.json")
     def start_floorplan_trial(self, scene: str, layout: int, num_containers: int, num_target_objects: int,
                               container_room_index: int = None, target_objects_room_index: int = None,
                               goal_room_index: int = None, task = None,
                               replicants: Union[int, List[Union[int, np.ndarray, Dict[str, float]]]] = 2,
-                              lighting: bool = True, random_seed: int = None, data_prefix = 'dataset/arxiv_dataset') -> None:
+                              lighting: bool = True, random_seed: int = None, data_prefix = 'dataset/dataset_train') -> None:
         """
         Start a trial in a floorplan scene.
 
@@ -170,32 +168,27 @@ class TransportChallenge(AssetCachedController):
         self.layout = layout
         self.task = task
         self.data_prefix = data_prefix
-        print('New Setting:', self.new_setting)
-        if self.new_setting:
-            self._start_trial_new(replicants=replicants, task_type = task, random_seed=random_seed)
-        else:    
-            self._start_trial(num_containers=num_containers, num_target_objects=num_target_objects,
-                          container_room_index=0, target_objects_room_index=0, goal_room_index=0,
-                          replicants=replicants, random_seed=random_seed)
+        self._start_trial_new(replicants=replicants, task_type = task, random_seed=random_seed)
 
-    def start_box_room_trial(self, size: Tuple[int, int], num_containers: int, num_target_objects: int,
-                             replicants: Union[int, List[Union[np.ndarray, Dict[str, float]]]] = 2,
-                             random_seed: int = None) -> None:
-        """
-        Start a trial in a simple box room scene.
 
-        :param size: The size of the room.
-        :param num_containers: The number of containers in the scene.
-        :param num_target_objects: The number of target objects in the scene.
-        :param replicants: An integer or a list. If an integer, this is the number of Replicants in the scene; they will be added at random positions on the occupancy map. If a list, each element can be: A numpy array (a worldspace position), or a dictionary (a worldspace position, e.g. `{"x": 0, "y": 0, "z": 0}`.
-        :param random_seed: The random see used to add containers, target objects, and Replicants, as well as to set the lighting and target object materials. If None, the seed is random.
-        """
-        self.communicate([{"$type": "load_scene",
-                           "scene_name": "ProcGenScene"},
-                          TDWUtils.create_empty_room(size[0], size[1])])
-        self._start_trial(num_containers=num_containers, num_target_objects=num_target_objects,
-                          container_room_index=0, target_objects_room_index=0, goal_room_index=0,
-                          replicants=replicants, random_seed=random_seed)
+    # def start_box_room_trial(self, size: Tuple[int, int], num_containers: int, num_target_objects: int,
+    #                          replicants: Union[int, List[Union[np.ndarray, Dict[str, float]]]] = 2,
+    #                          random_seed: int = None) -> None:
+    #     """
+    #     Start a trial in a simple box room scene.
+    #
+    #     :param size: The size of the room.
+    #     :param num_containers: The number of containers in the scene.
+    #     :param num_target_objects: The number of target objects in the scene.
+    #     :param replicants: An integer or a list. If an integer, this is the number of Replicants in the scene; they will be added at random positions on the occupancy map. If a list, each element can be: A numpy array (a worldspace position), or a dictionary (a worldspace position, e.g. `{"x": 0, "y": 0, "z": 0}`.
+    #     :param random_seed: The random see used to add containers, target objects, and Replicants, as well as to set the lighting and target object materials. If None, the seed is random.
+    #     """
+    #     self.communicate([{"$type": "load_scene",
+    #                        "scene_name": "ProcGenScene"},
+    #                       TDWUtils.create_empty_room(size[0], size[1])])
+    #     self._start_trial(num_containers=num_containers, num_target_objects=num_target_objects,
+    #                       container_room_index=0, target_objects_room_index=0, goal_room_index=0,
+    #                       replicants=replicants, random_seed=random_seed)
 
     def communicate(self, commands: Union[dict, List[dict]]) -> list:
         """
@@ -205,6 +198,7 @@ class TransportChallenge(AssetCachedController):
 
         :return The output data from the build.
         """
+        print(commands)
         return super().communicate(commands)
 
     def _start_trial_new(self, replicants: Union[int, List[Union[int, np.ndarray, Dict[str, float]]]] = 2, task_type = 'food', random_seed: int = None) -> None:
@@ -274,16 +268,15 @@ class TransportChallenge(AssetCachedController):
                 replicant_positions[i] = count_and_position[str(i)]
             count_and_position[str(i)] = replicant_positions[i]
             
-        replicant_names = ["man_suit_edited", "replicant_0"]
+        replicant_names = ["woman_casual", "man_casual"]
         for i, replicant_position in enumerate(replicant_positions):
-            replicant_name = replicant_names[i]
             replicant = ReplicantTransportChallenge(replicant_id=i,
                                                     state=self.state,
                                                     position=replicant_position,
                                                     image_frequency=self._image_frequency,
                                                     target_framerate=self._target_framerate,
                                                     enable_collision_detection=self.enable_collision_detection,
-                                                    name=replicant_name)
+                                                    name=replicant_names[i])
             self.replicants[replicant.replicant_id] = replicant
             self.add_ons.append(replicant)
         # Set the pass masks.
@@ -339,220 +332,220 @@ class TransportChallenge(AssetCachedController):
         print(load_count_and_position_path, 'saved')
 
 
-    def _start_trial(self, num_containers: int, num_target_objects: int, container_room_index: int = None,
-                     target_objects_room_index: int = None, goal_room_index: int = None,
-                     replicants: Union[int, List[Union[int, np.ndarray, Dict[str, float]]]] = 2,
-                     random_seed: int = None) -> None:
-        """
-        Start a trial.
-
-        :param num_containers: The number of containers in the scene.
-        :param num_target_objects: The number of target objects in the scene.
-        :param container_room_index: The index of the room in which containers will be placed. If None, the room is random.
-        :param target_objects_room_index: The index of the room in which target objects will be placed. If None, the room is random.
-        :param goal_room_index: The index of the goal room. If None, the room is random.
-        :param replicants: An integer or a list. If an integer, this is the number of Replicants in the scene; they will be added at random positions on the occupancy map. If a list, each element can be: An integer (the Replicant will be added *in this room* at a random occupancy map position), a numpy array (a worldspace position), or a dictionary (a worldspace position, e.g. `{"x": 0, "y": 0, "z": 0}`.
-        :param random_seed: The random see used to add containers, target objects, and Replicants, as well as to set the lighting and target object materials. If None, the seed is random.
-        """
-
-        # Create the random state.
-        if random_seed is None:
-            self._rng = np.random.RandomState()
-        else:
-            self._rng = np.random.RandomState(random_seed)
-        # We haven't created NavMesh obstacles yet.
-        Globals.MADE_NAV_MESH_OBSTACLES = False
-        # Clear the add-ons.
-        self.state = ChallengeState()
-        self.add_ons.clear()
-        self.replicants.clear()
-        # Add an occupancy map.
-        self.add_ons.append(self.occupancy_map)
-        # Get the rooms.
-        rooms: Dict[int, List[Dict[str, float]]] = self._get_rooms_map(communicate=True)
-        replicant_positions: List[Dict[str, float]] = list()
-        # Spawn a certain number of Replicants in random rooms.
-        if isinstance(replicants, int):
-            # Randomize the rooms.
-            room_indices = list(range(len(rooms)))
-            self._rng.shuffle(room_indices)
-            room_index = 0
-            # Place Replicants in different rooms.
-            for i in range(replicants):
-                # Get a random position in the room.
-                positions = rooms[room_indices[room_index]]
-                replicant_positions.append(positions[self._rng.randint(0, len(positions))])
-                room_index += 1
-                if room_index >= len(room_indices):
-                    room_index = 0
-        # Spawn Replicants in the center of rooms or in certain positions.
-        elif isinstance(replicants, list):
-            for i in range(len(replicants)):
-                # Spawn a Replicant at a random position in a room.
-                if isinstance(replicants[i], int):
-                    positions = rooms[replicants[i]]
-                    position = positions[self._rng.randint(0, len(positions))]
-                # Spawn a Replicant at a defined position.
-                elif isinstance(replicants[i], np.ndarray):
-                    position = TDWUtils.array_to_vector3(replicants[i])
-                # Spawn a Replicant at a defined position.
-                elif isinstance(replicants[i], dict):
-                    position = replicants[i]
-                else:
-                    raise Exception(f"Invalid Replicant position: {replicants[i]}")
-                # Add a Replicant position.
-                replicant_positions.append(position)
-                # Occupy the position.
-                rooms = self._occupy_position(position=position)
-        # Add the Replicants.
-        for i, replicant_position in enumerate(replicant_positions):
-            replicant = ReplicantTransportChallenge(replicant_id=i,
-                                                    state=self.state,
-                                                    position=replicant_position,
-                                                    image_frequency=self._image_frequency,
-                                                    target_framerate=self._target_framerate,
-                                                    enable_collision_detection=self.enable_collision_detection)
-            self.replicants[replicant.replicant_id] = replicant
-            self.add_ons.append(replicant)
-        commands = []
-        # Add containers.
-        room_indices = list(rooms.keys())
-        self._rng.shuffle(room_indices)
-        if container_room_index is None:
-            container_room = rooms[room_indices[0]]
-        else:
-            container_room = rooms[container_room_index]
-        container_room_position_indices = np.arange(0, len(container_room), dtype=int)
-        self._rng.shuffle(container_room_position_indices)
-        for i in range(num_containers):
-            if i >= len(container_room):
-                break
-            container_id = Controller.get_unique_id()
-            # Remember the container.
-            self.state.container_ids.append(container_id)
-            # Get the container's position.
-            position = TDWUtils.vector3_to_array(container_room[container_room_position_indices[i]])
-            position += self._rng.uniform(-0.05, 0.05, 3)
-            position[1] = 0
-            position_v3 = TDWUtils.array_to_vector3(position)
-            # Get the container name.
-            container_name: str = self._container_names[self._rng.randint(0, len(self._container_names))]
-            # Add the container. Use custom physics parameters to set high friction and low bounciness.
-            commands.extend(Controller.get_add_physics_object(model_name=container_name,
-                                                              object_id=container_id,
-                                                              position=position_v3,
-                                                              rotation={"x": 0,
-                                                                        "y": float(self._rng.uniform(0, 360)),
-                                                                        "z": 0},
-                                                              default_physics_values=False,
-                                                              scale_mass=False,
-                                                              mass=5,
-                                                              dynamic_friction=0.8,
-                                                              static_friction=0.8,
-                                                              bounciness=0.1))
-            # Update the occupancy map.
-            rooms = self._occupy_position(position=position_v3)
-        # Add target objects.
-        if target_objects_room_index is None:
-            target_objects_room = rooms[room_indices[1]]
-        else:
-            target_objects_room = rooms[target_objects_room_index]
-        target_object_room_position_indices = np.arange(0, len(target_objects_room), dtype=int)
-        self._rng.shuffle(target_object_room_position_indices)
-        for i in range(num_target_objects):
-            if i >= len(target_objects_room):
-                break
-            target_object_id = Controller.get_unique_id()
-            # Remember the target object.
-            self.state.target_object_ids.append(target_object_id)
-            # Get the target object's position.
-            position = TDWUtils.vector3_to_array(target_objects_room[target_object_room_position_indices[i]])
-            position += self._rng.uniform(-0.05, 0.05, 3)
-            position[1] = 0
-            position_v3 = TDWUtils.array_to_vector3(position)
-            # Get the target object name.
-            target_object_name: str = self._target_object_names[self._rng.randint(0, len(self._target_object_names))]
-            # Get the target object scale.
-            target_object_scale: float = self._target_objects_names_and_scales[target_object_name]
-            # Add the target object.
-            commands.extend(Controller.get_add_physics_object(model_name=target_object_name,
-                                                              object_id=target_object_id,
-                                                              position=position_v3,
-                                                              rotation={"x": 0,
-                                                                        "y": float(self._rng.uniform(0, 360)),
-                                                                        "z": 0},
-                                                              scale_factor={"x": target_object_scale,
-                                                                            "y": target_object_scale,
-                                                                            "z": target_object_scale},
-                                                              scale_mass=False,
-                                                              default_physics_values=False,
-                                                              mass=TransportChallenge.TARGET_OBJECT_MASS,
-                                                              dynamic_friction=0.8,
-                                                              static_friction=0.8,
-                                                              bounciness=0.1))
-            # Set a random visual material for each target object.
-            visual_material: str = self._rng.choice(self._target_object_visual_materials)
-            substructure = Controller.MODEL_LIBRARIANS["models_core.json"].get_record(target_object_name).substructure
-            visual_material_commands = TDWUtils.set_visual_material(substructure=substructure,
-                                                                    material=visual_material,
-                                                                    object_id=target_object_id,
-                                                                    c=self,
-                                                                    quality="low")
-            commands.extend(visual_material_commands)
-        # Choose a goal room.
-        rooms: Dict[int, List[Dict[str, float]]] = self._get_rooms_map(communicate=False)
-        if goal_room_index is None:
-            room_indices: List[int] = list(rooms.keys())
-            goal_room_index = room_indices[self._rng.randint(0, len(room_indices))]
-        # Convert the list of room points to a numpy array.
-        room_points: np.ndarray = np.array([TDWUtils.vector3_to_array(p) for p in rooms[room_indices[goal_room_index]]])
-        # Get the centroid of the room.
-        room_centroid: np.ndarray = np.mean(room_points[:, -3:], axis=0)
-        # noinspection PyArgumentList
-        nearest_index: int = cKDTree(room_points).query(room_centroid, k=1)[1]
-        # Set the goal position.
-        self.goal_position = room_points[nearest_index]
-        # Add a challenge state and object manager.
-        self.object_manager.reset()
-        self.add_ons.extend([self.state, self.object_manager])
-        # Initialize the scene, adding the containers, target objects, and Replicants.
-        self.communicate(commands)
-        self.communicate([])
-        commands.clear()
-        # Make all high-mass objects kinematic.
-        for object_id in self.object_manager.objects_static:
-            o = self.object_manager.objects_static[object_id]
-            if o.mass >= TransportChallenge.KINEMATIC_MASS and not o.kinematic:
-                commands.append({"$type": "set_kinematic_state",
-                                 "id": object_id,
-                                 "is_kinematic": True,
-                                 "use_gravity": False})
-                self.object_manager.objects_static[object_id].kinematic = True
-        for replicant_id in self.replicants:
-            # Set pass masks.
-            commands.append({"$type": "set_pass_masks",
-                             "pass_masks": self._image_passes,
-                             "avatar_id": self.replicants[replicant_id].static.avatar_id})
-            # Ignore collisions with target objects.
-            self.replicants[replicant_id].collision_detection.exclude_objects.extend(self.state.target_object_ids)
-        # Add a NavMesh.
-        nav_mesh_exclude_objects = list(self.replicants.keys())
-        nav_mesh_exclude_objects.extend(self.state.target_object_ids)
-        nav_mesh = NavMesh(exclude_objects=nav_mesh_exclude_objects)
-        self.add_ons.append(nav_mesh)
-        # Send the commands.
-        self.communicate(commands)
-        # Reset the heads.
-        for replicant_id in self.replicants:
-            self.replicants[replicant_id].reset_head(scale_duration=Globals.SCALE_IK_DURATION)
-        reset_heads = False
-        while not reset_heads:
-            self.communicate([])
-            reset_heads = True
-            for replicant_id in self.replicants:
-                if self.replicants[replicant_id].action.status == ActionStatus.ongoing:
-                    reset_heads = False
-                    break
+    # def _start_trial(self, num_containers: int, num_target_objects: int, container_room_index: int = None,
+    #                  target_objects_room_index: int = None, goal_room_index: int = None,
+    #                  replicants: Union[int, List[Union[int, np.ndarray, Dict[str, float]]]] = 2,
+    #                  random_seed: int = None) -> None:
+    #     """
+    #     Start a trial.
+    #
+    #     :param num_containers: The number of containers in the scene.
+    #     :param num_target_objects: The number of target objects in the scene.
+    #     :param container_room_index: The index of the room in which containers will be placed. If None, the room is random.
+    #     :param target_objects_room_index: The index of the room in which target objects will be placed. If None, the room is random.
+    #     :param goal_room_index: The index of the goal room. If None, the room is random.
+    #     :param replicants: An integer or a list. If an integer, this is the number of Replicants in the scene; they will be added at random positions on the occupancy map. If a list, each element can be: An integer (the Replicant will be added *in this room* at a random occupancy map position), a numpy array (a worldspace position), or a dictionary (a worldspace position, e.g. `{"x": 0, "y": 0, "z": 0}`.
+    #     :param random_seed: The random see used to add containers, target objects, and Replicants, as well as to set the lighting and target object materials. If None, the seed is random.
+    #     """
+    #
+    #     # Create the random state.
+    #     if random_seed is None:
+    #         self._rng = np.random.RandomState()
+    #     else:
+    #         self._rng = np.random.RandomState(random_seed)
+    #     # We haven't created NavMesh obstacles yet.
+    #     Globals.MADE_NAV_MESH_OBSTACLES = False
+    #     # Clear the add-ons.
+    #     self.state = ChallengeState()
+    #     self.add_ons.clear()
+    #     self.replicants.clear()
+    #     # Add an occupancy map.
+    #     self.add_ons.append(self.occupancy_map)
+    #     # Get the rooms.
+    #     rooms: Dict[int, List[Dict[str, float]]] = self._get_rooms_map(communicate=True)
+    #     replicant_positions: List[Dict[str, float]] = list()
+    #     # Spawn a certain number of Replicants in random rooms.
+    #     if isinstance(replicants, int):
+    #         # Randomize the rooms.
+    #         room_indices = list(range(len(rooms)))
+    #         self._rng.shuffle(room_indices)
+    #         room_index = 0
+    #         # Place Replicants in different rooms.
+    #         for i in range(replicants):
+    #             # Get a random position in the room.
+    #             positions = rooms[room_indices[room_index]]
+    #             replicant_positions.append(positions[self._rng.randint(0, len(positions))])
+    #             room_index += 1
+    #             if room_index >= len(room_indices):
+    #                 room_index = 0
+    #     # Spawn Replicants in the center of rooms or in certain positions.
+    #     elif isinstance(replicants, list):
+    #         for i in range(len(replicants)):
+    #             # Spawn a Replicant at a random position in a room.
+    #             if isinstance(replicants[i], int):
+    #                 positions = rooms[replicants[i]]
+    #                 position = positions[self._rng.randint(0, len(positions))]
+    #             # Spawn a Replicant at a defined position.
+    #             elif isinstance(replicants[i], np.ndarray):
+    #                 position = TDWUtils.array_to_vector3(replicants[i])
+    #             # Spawn a Replicant at a defined position.
+    #             elif isinstance(replicants[i], dict):
+    #                 position = replicants[i]
+    #             else:
+    #                 raise Exception(f"Invalid Replicant position: {replicants[i]}")
+    #             # Add a Replicant position.
+    #             replicant_positions.append(position)
+    #             # Occupy the position.
+    #             rooms = self._occupy_position(position=position)
+    #     # Add the Replicants.
+    #     for i, replicant_position in enumerate(replicant_positions):
+    #         replicant = ReplicantTransportChallenge(replicant_id=i,
+    #                                                 state=self.state,
+    #                                                 position=replicant_position,
+    #                                                 image_frequency=self._image_frequency,
+    #                                                 target_framerate=self._target_framerate,
+    #                                                 enable_collision_detection=self.enable_collision_detection)
+    #         self.replicants[replicant.replicant_id] = replicant
+    #         self.add_ons.append(replicant)
+    #     commands = []
+    #     # Add containers.
+    #     room_indices = list(rooms.keys())
+    #     self._rng.shuffle(room_indices)
+    #     if container_room_index is None:
+    #         container_room = rooms[room_indices[0]]
+    #     else:
+    #         container_room = rooms[container_room_index]
+    #     container_room_position_indices = np.arange(0, len(container_room), dtype=int)
+    #     self._rng.shuffle(container_room_position_indices)
+    #     for i in range(num_containers):
+    #         if i >= len(container_room):
+    #             break
+    #         container_id = Controller.get_unique_id()
+    #         # Remember the container.
+    #         self.state.container_ids.append(container_id)
+    #         # Get the container's position.
+    #         position = TDWUtils.vector3_to_array(container_room[container_room_position_indices[i]])
+    #         position += self._rng.uniform(-0.05, 0.05, 3)
+    #         position[1] = 0
+    #         position_v3 = TDWUtils.array_to_vector3(position)
+    #         # Get the container name.
+    #         container_name: str = self._container_names[self._rng.randint(0, len(self._container_names))]
+    #         # Add the container. Use custom physics parameters to set high friction and low bounciness.
+    #         commands.extend(Controller.get_add_physics_object(model_name=container_name,
+    #                                                           object_id=container_id,
+    #                                                           position=position_v3,
+    #                                                           rotation={"x": 0,
+    #                                                                     "y": float(self._rng.uniform(0, 360)),
+    #                                                                     "z": 0},
+    #                                                           default_physics_values=False,
+    #                                                           scale_mass=False,
+    #                                                           mass=5,
+    #                                                           dynamic_friction=0.8,
+    #                                                           static_friction=0.8,
+    #                                                           bounciness=0.1))
+    #         # Update the occupancy map.
+    #         rooms = self._occupy_position(position=position_v3)
+    #     # Add target objects.
+    #     if target_objects_room_index is None:
+    #         target_objects_room = rooms[room_indices[1]]
+    #     else:
+    #         target_objects_room = rooms[target_objects_room_index]
+    #     target_object_room_position_indices = np.arange(0, len(target_objects_room), dtype=int)
+    #     self._rng.shuffle(target_object_room_position_indices)
+    #     for i in range(num_target_objects):
+    #         if i >= len(target_objects_room):
+    #             break
+    #         target_object_id = Controller.get_unique_id()
+    #         # Remember the target object.
+    #         self.state.target_object_ids.append(target_object_id)
+    #         # Get the target object's position.
+    #         position = TDWUtils.vector3_to_array(target_objects_room[target_object_room_position_indices[i]])
+    #         position += self._rng.uniform(-0.05, 0.05, 3)
+    #         position[1] = 0
+    #         position_v3 = TDWUtils.array_to_vector3(position)
+    #         # Get the target object name.
+    #         target_object_name: str = self._target_object_names[self._rng.randint(0, len(self._target_object_names))]
+    #         # Get the target object scale.
+    #         target_object_scale: float = self._target_objects_names_and_scales[target_object_name]
+    #         # Add the target object.
+    #         commands.extend(Controller.get_add_physics_object(model_name=target_object_name,
+    #                                                           object_id=target_object_id,
+    #                                                           position=position_v3,
+    #                                                           rotation={"x": 0,
+    #                                                                     "y": float(self._rng.uniform(0, 360)),
+    #                                                                     "z": 0},
+    #                                                           scale_factor={"x": target_object_scale,
+    #                                                                         "y": target_object_scale,
+    #                                                                         "z": target_object_scale},
+    #                                                           scale_mass=False,
+    #                                                           default_physics_values=False,
+    #                                                           mass=TransportChallenge.TARGET_OBJECT_MASS,
+    #                                                           dynamic_friction=0.8,
+    #                                                           static_friction=0.8,
+    #                                                           bounciness=0.1))
+    #         # Set a random visual material for each target object.
+    #         visual_material: str = self._rng.choice(self._target_object_visual_materials)
+    #         substructure = Controller.MODEL_LIBRARIANS["models_core.json"].get_record(target_object_name).substructure
+    #         visual_material_commands = TDWUtils.set_visual_material(substructure=substructure,
+    #                                                                 material=visual_material,
+    #                                                                 object_id=target_object_id,
+    #                                                                 c=self,
+    #                                                                 quality="low")
+    #         commands.extend(visual_material_commands)
+    #     # Choose a goal room.
+    #     rooms: Dict[int, List[Dict[str, float]]] = self._get_rooms_map(communicate=False)
+    #     if goal_room_index is None:
+    #         room_indices: List[int] = list(rooms.keys())
+    #         goal_room_index = room_indices[self._rng.randint(0, len(room_indices))]
+    #     # Convert the list of room points to a numpy array.
+    #     room_points: np.ndarray = np.array([TDWUtils.vector3_to_array(p) for p in rooms[room_indices[goal_room_index]]])
+    #     # Get the centroid of the room.
+    #     room_centroid: np.ndarray = np.mean(room_points[:, -3:], axis=0)
+    #     # noinspection PyArgumentList
+    #     nearest_index: int = cKDTree(room_points).query(room_centroid, k=1)[1]
+    #     # Set the goal position.
+    #     self.goal_position = room_points[nearest_index]
+    #     # Add a challenge state and object manager.
+    #     self.object_manager.reset()
+    #     self.add_ons.extend([self.state, self.object_manager])
+    #     # Initialize the scene, adding the containers, target objects, and Replicants.
+    #     self.communicate(commands)
+    #     self.communicate([])
+    #     commands.clear()
+    #     # Make all high-mass objects kinematic.
+    #     for object_id in self.object_manager.objects_static:
+    #         o = self.object_manager.objects_static[object_id]
+    #         if o.mass >= TransportChallenge.KINEMATIC_MASS and not o.kinematic:
+    #             commands.append({"$type": "set_kinematic_state",
+    #                              "id": object_id,
+    #                              "is_kinematic": True,
+    #                              "use_gravity": False})
+    #             self.object_manager.objects_static[object_id].kinematic = True
+    #     for replicant_id in self.replicants:
+    #         # Set pass masks.
+    #         commands.append({"$type": "set_pass_masks",
+    #                          "pass_masks": self._image_passes,
+    #                          "avatar_id": self.replicants[replicant_id].static.avatar_id})
+    #         # Ignore collisions with target objects.
+    #         self.replicants[replicant_id].collision_detection.exclude_objects.extend(self.state.target_object_ids)
+    #     # Add a NavMesh.
+    #     nav_mesh_exclude_objects = list(self.replicants.keys())
+    #     nav_mesh_exclude_objects.extend(self.state.target_object_ids)
+    #     nav_mesh = NavMesh(exclude_objects=nav_mesh_exclude_objects)
+    #     self.add_ons.append(nav_mesh)
+    #     # Send the commands.
+    #     self.communicate(commands)
+    #     # Reset the heads.
+    #     for replicant_id in self.replicants:
+    #         self.replicants[replicant_id].reset_head(scale_duration=Globals.SCALE_IK_DURATION)
+    #     reset_heads = False
+    #     while not reset_heads:
+    #         self.communicate([])
+    #         reset_heads = True
+    #         for replicant_id in self.replicants:
+    #             if self.replicants[replicant_id].action.status == ActionStatus.ongoing:
+    #                 reset_heads = False
+    #                 break
 
     def _get_rooms_map(self, communicate: bool) -> Dict[int, List[Dict[str, float]]]:
         # Generate a new occupancy map and request scene regions data.
