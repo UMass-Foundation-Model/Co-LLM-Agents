@@ -62,7 +62,7 @@ Download `transport challenge asset bundles`: Commonly it is automatically downl
 
 Besides using ground truth segmentation mask in `TDW_MAT`, we also have `no-gt-mask` mode. Here you need to train a segmentation model on your own.
 
-We finetune Mask R-CNN as our detection baseline, which is based on `mmdetection`. You can download the model weight [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you want to use it, put it in the `detection_pipeline/` folder (where you can also find the `config` file). 
+We finetune Mask R-CNN as our detection baseline, which is based on `mmdetection`. You can download the model weight [here](https://drive.google.com/file/d/1S5id94R2rVeawVrES0eWQzCr_bW81Z3v/view?usp=drive_link). If you want to use it, put it in the `detection_pipeline/` folder (where you can also find the `config` file). 
 
 To test the installation of our detection model and the pre-trained model, you can run:
 
