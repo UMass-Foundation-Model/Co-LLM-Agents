@@ -131,46 +131,14 @@ dmypy.json
 .pyre/
 
 .idea/
-tdw-transport-challenge-old/
-transport_challenge/
-setup_gym.py
 *.pyc
 config.ini
 
-*.jpg
-*.png
 output/
-Images/
-tdw_build/
 .config/
-top_down_image/
 *.conf
 transport_challenge_asset_bundles/
-transport_challenge_asset_bundles.zip
-asset_cache/
-TDW_Linux.tar.gz.1
-*.jepg
 
-outputs/
-scene_outputs/
-replay/
-replay_imgs/
-other_result/
-backup/
 LLM/chat_raw.json
-action.pkl
-results.zip
 
 detection_pipeline/*.pth
-detection_pipeline/mmdetection/
-detection_pipeline/demo/
-captured*/
-nohup.out
-*.avi
-*.zip
-utils/render/figure_2/*
-CoLlama/*.json
-CoLlama/*.csv
-
-final_results
-results_json
