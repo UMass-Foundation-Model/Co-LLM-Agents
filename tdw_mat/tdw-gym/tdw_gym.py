@@ -40,7 +40,7 @@ def might_fail_launch(launch, port = None):
         print("kill failure launch ...", f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
         os.system(f"ps ux | grep TDW.x86_64\ -port\ {port} | awk {{'print $2'}} | xargs kill")
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(15)
+    signal.alarm(600)
     try:
         print("Trying to launch tdw ...")
         return launch()

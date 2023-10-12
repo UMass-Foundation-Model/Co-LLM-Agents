@@ -198,7 +198,7 @@ class TransportChallenge(AssetCachedController):
 
         :return The output data from the build.
         """
-        print(commands)
+        #print(commands)
         return super().communicate(commands)
 
     def _start_trial_new(self, replicants: Union[int, List[Union[int, np.ndarray, Dict[str, float]]]] = 2, task_type = 'food', random_seed: int = None) -> None:

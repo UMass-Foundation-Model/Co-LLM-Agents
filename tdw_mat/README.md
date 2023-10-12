@@ -3,7 +3,7 @@
 ## Codebase Layouts 
 
 ```
-|__ tdw_gym/ 					main code
+|__ tdw-gym/ 					main code
 |       |__ challenge.py         main evaluation code
 |       |__ tdw_gym.py           main env code
 |       |__ h_agent.py           RHP Agent
