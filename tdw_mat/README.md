@@ -27,7 +27,7 @@ Run the following commands step by step to setup the default environments:
 ```bash
 conda create -n tdw_mat python=3.9
 conda activate tdw_mat
-pip3 install -e .
+pip install -e .
 ```
 
 If you're running TDW on a remote Linux server, follow the [TDW Installation Document](https://github.com/threedworld-mit/tdw/blob/master/Documentation/lessons/setup/install.md) to configure the X server.
