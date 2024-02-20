@@ -1,4 +1,4 @@
-# Building Cooperative Embodied Agents Modularly with Large Language Models
+# Building Cooperative Embodied Agents Modularly with Large Language Models (ICLR 2024)
 
 This repo contains codes for the following paper:
 
@@ -12,7 +12,7 @@ Project Website: [Co-LLM-Agents](https://vis-www.cs.umass.edu/Co-LLM-Agents/)
 
 ## News
 
-**[9/4/2023]**: `ThreeDWorld Multi-Agent Transport` no longer provide ground truth segmentation mask in default. We implement a vision detection module with a fine-tuned Mask-RCNN model. For more details, please read [README](tdw_mat/README.md) in _tdw_mat_.
+**[9/4/2023]**: `ThreeDWorld Multi-Agent Transport` no longer provides ground truth segmentation mask in default. We implement a vision detection module with a fine-tuned Mask-RCNN model. For more details, please read [README](tdw_mat/README.md) in _tdw_mat_.
 
 **[8/1/2023]**: We provide the VirtualHome Simulator executable we used [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you met `XDG_RUNTIME_DIR not set in the environment` error previously, please check if you are using the new version we provided.
 
@@ -139,10 +139,10 @@ There are more interesting cases and demos on our [website](https://vis-www.cs.u
 ## Citation
 If you find our work useful, please consider citing:
 ```
-@article{zhang2023building,
+@article{zhang2024building,
   title={Building Cooperative Embodied Agents Modularly with Large Language Models},
   author={Zhang, Hongxin and Du, Weihua and Shan, Jiaming and Zhou, Qinhong and Du, Yilun and Tenenbaum, Joshua B and Shu, Tianmin and Gan, Chuang},
-  journal={arXiv preprint arXiv:2307.02485},
-  year={2023}
+  journal={ICLR},
+  year={2024}
 }
 ```
