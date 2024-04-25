@@ -22,7 +22,7 @@ class ReachForTransportChallenge(ReachFor):
         :param offhand_follows: If True, the offhand will follow the primary hand, meaning that it will maintain the same relative position. Ignored if `len(arms) > 1` or if `target` is an object ID.
         """
 
-        super().__init__(target=target,
+        super().__init__(targets=[target],
                          offhand_follows=offhand_follows,
                          arrived_at=0.09,
                          max_distance=1.5,
