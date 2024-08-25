@@ -49,7 +49,7 @@ Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repo
 git clone --branch wah https://github.com/xavierpuigf/virtualhome.git
 ```
 
-Download the [Simulator](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing) (Linux x86-64 version), and unzip it.
+Download the [Simulator](https://drive.google.com/file/d/1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp/view?usp=sharing) (Linux x86-64 version), and unzip it.
 
 The files should be organized as follows:
 
