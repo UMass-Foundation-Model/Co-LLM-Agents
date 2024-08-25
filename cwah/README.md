@@ -11,8 +11,7 @@ git clone --branch wah https://github.com/xavierpuigf/virtualhome.git
 
 Download the simulator, and put it in an `executable` folder, one folder above this repository
 
-
-- [Download](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing) Linux x86-64 version.
+- [Download](https://drive.google.com/file/d/1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp/view?usp=sharing) Linux x86-64 version.
 
 
 **[IMPORTANT]** Please use our modified version of the VirtualHome API repo (wah branch in the VirtualHome repo) and the provided version of the executable.
