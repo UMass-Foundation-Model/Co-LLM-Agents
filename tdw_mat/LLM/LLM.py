@@ -67,7 +67,6 @@ class LLM:
                     "logprobs": sampling_parameters.logprobs,
                     "echo": sampling_parameters.echo,
                 }
-            if self.lm_id == 'gpt-4': self.lm_id = 'gpt4'
         elif self.source == 'hf':
             self.tokenizer = LlamaTokenizer.from_pretrained(self.lm_id, use_fast=True)
             self.model = LlamaForCausalLM.from_pretrained(self.lm_id, device_map='auto', load_in_4bit=True)
