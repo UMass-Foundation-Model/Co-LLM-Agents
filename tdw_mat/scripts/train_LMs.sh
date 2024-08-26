@@ -15,7 +15,6 @@ python3 tdw-gym/challenge.py \
 --data_prefix dataset/dataset_train/ \
 --eval_episodes 6 0 11 17 18 1 2 3 21 22 23 4 5 19 20 \
 --screen_size 256 \
---no_save_img \
---debug
+--no_save_img
 
 pkill -f -9 "port $port"

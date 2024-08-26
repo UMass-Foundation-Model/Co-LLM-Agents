@@ -172,12 +172,14 @@ class TDW(Env):
 
     def get_object_type(self, id):
         if id in self.target_object_ids:
-            return 0
+            return 0 # target object
         if id in self.container_ids:
-            return 1
+            return 1 # container
         if self.object_categories[id] == 'bed':
-            return 2
-        return 4
+            return 2 # goal position
+        # 3: agent
+        # 4: obstacle
+        return 5 # unrelated object
 
     def get_with_character_mask(self, agent_id, character_object_ids):
         color_set = [self.segmentation_colors[id] for id in character_object_ids if id in self.segmentation_colors] + [self.replicant_colors[id] for id in character_object_ids if id in self.replicant_colors]
@@ -771,8 +773,7 @@ class TDW(Env):
             depth_img.save(os.path.join(save_path, f'{self.num_step:04}_{self.num_frames:04}_depth.png'))
 
     def close(self):
-        print('close')
-        with open(f'action.pkl', 'wb') as f:
-            d = {'scene_info': self.scene_info, \
-                'actions': self.action_list}
-            pickle.dump(d, f)
+        print('close environment ...')
+    #    with open(os.path.join(self.save_dir, 'action.pkl'), 'wb') as f:
+    #        d = {'scene_info': self.scene_info, 'actions': self.action_list}
+    #        pickle.dump(d, f)
