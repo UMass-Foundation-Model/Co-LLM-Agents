@@ -1,7 +1,3 @@
-import numpy as np
-import json
-import copy
-import ipdb
 import itertools
 import os
 import sys
@@ -12,7 +8,6 @@ sys.path.append(f'{curr_dir}/../../virtualhome/simulation/')
 from evolving_graph.utils import load_graph_dict, graph_dict_helper
 from evolving_graph.execution import ScriptExecutor, ExecutionInfo
 from evolving_graph.scripts import read_script_from_string
-
 from evolving_graph.environment import EnvironmentGraph, EnvironmentState
 
 

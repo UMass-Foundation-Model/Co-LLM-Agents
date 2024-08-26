@@ -1,7 +1,7 @@
 import numpy as np
 import random
-from simulation.evolving_graph.utils import load_graph_dict, load_name_equivalence
-from simulation.evolving_graph.environment import EnvironmentState, EnvironmentGraph, GraphNode
+from simulation.evolving_graph.utils import load_name_equivalence
+from simulation.evolving_graph.environment import EnvironmentState, EnvironmentGraph
 import scipy.special
 import ipdb
 import pdb

@@ -2,7 +2,6 @@ import sys
 import os
 curr_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(f'{curr_dir}/..')
-import ipdb
 import pickle
 import json
 import random

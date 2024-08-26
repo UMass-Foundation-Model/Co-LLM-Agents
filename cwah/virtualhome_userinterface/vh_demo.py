@@ -1,12 +1,9 @@
 #!flask/bin/python
 #import cStringIO
 import numpy as np
-import torch
 import time
 import json
-import ipdb
 import sys, os
-from collections import namedtuple
 import copy
 
 sys.path.append('..')
@@ -981,4 +978,3 @@ if __name__ == '__main__':
 		app.run(host='localhost', port=str(args.portflask))
 	else:
 		app.run(host='0.0.0.0', port=str(args.portflask))
-

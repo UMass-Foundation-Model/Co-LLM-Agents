@@ -12,9 +12,6 @@ import argparse
 home_path = '../../'
 sys.path.append(home_path + '/virtualhome')
 
-from simulation.unity_simulator import comm_unity
-
-
 class SetInitialGoal:
     def __init__(self, obj_position, class_name_size, init_pool_tasks, task_name, same_room=True, goal_template=None, rand=None):
         self.task_name = task_name

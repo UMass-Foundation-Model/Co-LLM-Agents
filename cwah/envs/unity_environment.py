@@ -4,6 +4,7 @@ import os
 
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{curr_dir}/../../virtualhome/simulation/')
+print(f'{curr_dir}/../../virtualhome/simulation/')
 
 from environment.unity_environment import UnityEnvironment as BaseUnityEnvironment
 from evolving_graph import utils as utils_env
@@ -11,7 +12,7 @@ import pdb
 import numpy as np
 import copy
 import ipdb
-from functools import lru_cache, partial
+from functools import partial
 import re
 
 
