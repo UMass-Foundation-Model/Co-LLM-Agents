@@ -2,42 +2,40 @@
 
 ## Setup
 ### Step 1: Get the VirtualHome Simulator and API
-Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repository one folder above this repository
+Get the VirtualHome Simulator and API and put it at the same level as the `cwah` folder.
+
+Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repository:
 
 ```bash
-cd ..
 git clone --branch wah https://github.com/xavierpuigf/virtualhome.git
 ```
 
-Download the simulator, and put it in an `executable` folder, one folder above this repository
+Download the [Simulator](https://drive.google.com/file/d/1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp/view?usp=sharing) (Linux x86-64 version), and unzip it.
 
-- [Download](https://drive.google.com/file/d/1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp/view?usp=sharing) Linux x86-64 version.
-
+```bash
+gdown https://drive.google.com/uc?id=1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp
+unzip executable.zip
+chmod +x executable/linux_exec.v2.3.0.x86_64
+```
 
 **[IMPORTANT]** Please use our modified version of the VirtualHome API repo (wah branch in the VirtualHome repo) and the provided version of the executable.
 
 The files should be organized as follows:
 
-```
-|
+```bash
 |--cwah/
-|
 |--virtualhome/
-|
 |--executable/
 ```
 
 ### Step 2: Install Requirements
 
-`cd cwah`
-
-`conda create --name cwah python=3.8`
-
-[//]: # (&#40;or use `conda create --prefix /work/pi_name/$USER-conda/envs/cwah python=3.8` if you want to create in a specific folder&#41;)
-
-`conda activate cwah`
-
-`pip install -r requirements.txt `
+```bash
+cd cwah
+conda create --name cwah python=3.8
+conda activate cwah
+pip install -r requirements.txt
+```
 
 ## Run Experiments
 
