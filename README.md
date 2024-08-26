@@ -12,6 +12,8 @@ Project Website: [Co-LLM-Agents](https://vis-www.cs.umass.edu/Co-LLM-Agents/)
 
 ## News
 
+**[8/25/2024]**: Updates on the navigation module of agents on the `ThreeDWorld Multi-Agent Transport` environment to fix the navigation issues.
+
 **[9/4/2023]**: `ThreeDWorld Multi-Agent Transport` no longer provides ground truth segmentation mask in default. We implement a vision detection module with a fine-tuned Mask-RCNN model. For more details, please read [README](tdw_mat/README.md) in _tdw_mat_.
 
 **[8/1/2023]**: We provide the VirtualHome Simulator executable we used [here](https://drive.google.com/file/d/1JTrV5jdF-LQVwY3OsV3Jd3r6PRghyHBp/view?usp=sharing). If you met `XDG_RUNTIME_DIR not set in the environment` error previously, please check if you are using the new version we provided.
