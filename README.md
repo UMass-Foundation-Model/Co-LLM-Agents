@@ -41,7 +41,7 @@ python demo/demo_scene.py
 
 ### A simple start guide for `Communicative Watch-And-Help`:
 
-**Step 1**: Get the VirtualHome Simulator and API
+**Step 1**: Get the VirtualHome Simulator and API and put it at the same level as the `cwah` folder.
 
 Clone the [VirtualHome API](https://github.com/xavierpuigf/virtualhome.git) repository:
 
@@ -50,6 +50,12 @@ git clone --branch wah https://github.com/xavierpuigf/virtualhome.git
 ```
 
 Download the [Simulator](https://drive.google.com/file/d/1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp/view?usp=sharing) (Linux x86-64 version), and unzip it.
+
+```bash
+gdown https://drive.google.com/uc?id=1L79SxE07Jt-8-_uCvNnkwz5Kf6AjtaGp
+unzip executable.zip
+chmod +x executable/linux_exec.v2.3.0.x86_64
+```
 
 The files should be organized as follows:
 
