@@ -366,7 +366,7 @@ class H_agent:
             self.pre_interact(goal)
             return
 
-        action, path_len = self.agent_memory.move_to_pos(self.goal, explore=True)
+        action, path_len = self.agent_memory.move_to_pos(self.goal)
         return action
     
     def update_grasp(self):

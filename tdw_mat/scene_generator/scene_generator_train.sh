@@ -29,7 +29,6 @@ python3 tdw-gym/challenge.py \
 --cot \
 --lm_id gpt-4 \
 --max_frames 10 \
---data_prefix dataset/$1/ \
---debug
+--data_prefix dataset/$1/
 
 rm -rf results/9999

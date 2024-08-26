@@ -8,18 +8,12 @@ import time
 import math
 import copy
 from PIL import Image
+from agent_memory import AgentMemory
 
 from LLM.LLM import LLM
 
 CELL_SIZE = 0.125
 ANGLE = 15
-
-def pos2map(x, z, _scene_bounds):
-    i = int(round((x - _scene_bounds["x_min"]) / CELL_SIZE))
-    j = int(round((z - _scene_bounds["z_min"]) / CELL_SIZE))
-    return i, j
-
-
 
 class lm_agent:
     def  __init__(self, agent_id, logger, max_frames, args, output_dir = 'results'):
@@ -33,11 +27,8 @@ class lm_agent:
         self.gt_mask = None
         self.object_info = {} # {id: {id: xx, type: 0/1/2, name: sss, position: x,y,z}}
         self.object_per_room = {} # {room_name: {0/1/2: [{id: xx, type: 0/1/2, name: sss, position: x,y,z}]}}
-        self.wall_map = None
         self.id_map = None
         self.object_map = None
-        self.known_map = None
-        self.occupancy_map = None
         self.agent_id = agent_id
         self.agent_type = 'lm_agent'
         self.agent_names = ["Alice", "Bob"]
@@ -55,12 +46,10 @@ class lm_agent:
         }
         self.max_nav_steps = 80
         self.max_move_steps = 150
-        self.space_upd_freq = 30 # update spare space into the map
         self.logger = logger
         random.seed(1024)
         self.debug = True
 
-        self.local_occupancy_map = None
         self.new_object_list = None
         self.visible_objects = None
         self.num_frames = None
@@ -251,105 +240,8 @@ class lm_agent:
             else: return self.agent_id # agent
         else: return self.color2id[color]
 
-    def dep2map(self):
-        local_known_map = np.zeros_like(self.occupancy_map, np.int32)
-        depth = self.obs['depth']
-
-        filter_depth = depth.copy()
-        for i in range(0, depth.shape[0]):
-            for j in range(0, depth.shape[1]):
-                if self.color2id_fc(tuple(self.obs['seg_mask'][i, j])) in self.with_character:
-                    filter_depth[i, j] = 1e9
-        depth = filter_depth
-        #depth_img = Image.fromarray(100 / depth).convert('RGB')
-        #depth_img.save(f'{self.output_dir}/Images/{self.agent_id}/{self.num_step}_depth_filter.png')
-
-        #camera info
-        FOV = self.obs['FOV']
-        W, H = depth.shape
-        cx = W / 2.
-        cy = H / 2.
-        fx = cx / np.tan(math.radians(FOV / 2.))
-        fy = cy / np.tan(math.radians(FOV / 2.))
-
-        #Ego
-        x_index = np.linspace(0, W - 1, W)
-        y_index = np.linspace(0, H - 1, H)
-        xx, yy = np.meshgrid(x_index, y_index)
-        xx = (xx - cx) / fx * depth
-        yy = (yy - cy) / fy * depth
-
-        pc = np.stack((xx, yy, depth, np.ones((xx.shape[0], xx.shape[1]))))
-
-        pc = pc.reshape(4, -1)
-
-        E = self.obs['camera_matrix']
-        inv_E = np.linalg.inv(np.array(E).reshape((4, 4)))
-        rot = np.array([[1, 0, 0, 0],
-                        [0, -1, 0, 0],
-                        [0, 0, -1, 0],
-                        [0, 0, 0, 1]])
-        inv_E = np.dot(inv_E, rot)
-
-        rpc = np.dot(inv_E, pc).reshape(4, W, H)
-
-        rpc = rpc.reshape(4, -1)
-        depth = depth.reshape(-1)
-
-        X = np.rint((rpc[0, :] - self._scene_bounds["x_min"]) / CELL_SIZE)
-        X = np.maximum(X, 0)
-        X = np.minimum(X, self.map_size[0] - 1)
-        Z = np.rint((rpc[2, :] - self._scene_bounds["z_min"]) / CELL_SIZE)
-        Z = np.maximum(Z, 0)
-        Z = np.minimum(Z, self.map_size[1] - 1)
-        
-        index = np.where((depth > 0) & (depth < self.detection_threshold) & (rpc[1, :] < 1.5))
-        XX = X[index].copy()
-        ZZ = Z[index].copy()
-        XX = XX.astype(np.int32)
-        ZZ = ZZ.astype(np.int32)
-        local_known_map[XX, ZZ] = 1
-
-        # It may be necessary to remove the object from the occupancy map
-        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] < 0.05)) # The object is moved, so the area remains empty, removing them from the occupancy map
-        XX = X[index].copy()
-        ZZ = Z[index].copy()
-        XX = XX.astype(np.int32)
-        ZZ = ZZ.astype(np.int32)
-        self.occupancy_map[XX, ZZ] = 0
-
-        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 0.1) & (rpc[1, :] < 1.5)) # update the occupancy map
-        XX = X[index]
-        ZZ = Z[index]
-        XX = XX.astype(np.int32)
-        ZZ = ZZ.astype(np.int32)
-        self.occupancy_map[XX, ZZ] = 1
-        self.local_occupancy_map[XX, ZZ] = 1
-
-        index = np.where((depth > 0) & (depth < self.navigation_threshold) & (rpc[1, :] > 2) & (rpc[1, :] < 3)) # it is a wall
-        XX = X[index]
-        ZZ = Z[index]
-        XX = XX.astype(np.int32)
-        ZZ = ZZ.astype(np.int32)
-        self.wall_map[XX, ZZ] = 1
-        return local_known_map
-
     def l2_distance(self, st, g):
         return ((st[0] - g[0]) ** 2 + (st[1] - g[1]) ** 2) ** 0.5
-
-    def get_angle(self, forward, origin, position):
-        p0 = np.array([origin[0], origin[2]])
-        p1 = np.array([position[0], position[2]])
-        d = p1 - p0
-        d = d / np.linalg.norm(d)
-        f = np.array([forward[0], forward[2]])
-
-        dot = f[0] * d[0] + f[1] * d[1]
-        det = f[0] * d[1] - f[1] * d[0]
-        angle = np.arctan2(det, dot)
-        angle = np.rad2deg(angle)
-        return angle
-
 
     def reach_target_pos(self, target_pos, threshold = 1.0):
         x, _, z = self.obs["agent"][:3]
@@ -360,29 +252,9 @@ class lm_agent:
                 return False
         return d < threshold
 
-    def conv2d(self, map, kernel=3):
-        from scipy.signal import convolve2d
-        conv = np.ones((kernel, kernel))
-        return convolve2d(map, conv, mode='same', boundary='fill')
-
-    def find_shortest_path(self, st, goal, map = None):
-        st_x, _, st_z = st
-        g_x, _, g_z = goal
-        st_i, st_j = self.pos2map(st_x, st_z)
-        g_i, g_j = self.pos2map(g_x, g_z)
-        dist_map = np.ones_like(map, dtype=np.float32)
-        super_map1 = self.conv2d(map, kernel=5)
-        dist_map[super_map1 > 0] = 5
-        super_map2 = self.conv2d(map)
-        dist_map[super_map2 > 0] = 10
-        dist_map[map > 0] = 50
-        dist_map[self.known_map == 0] += 5
-        dist_map[self.wall_map == 1] += 10000
-        path = pyastar.astar_path(dist_map, (st_i, st_j),
-                                  (g_i, g_j), allow_diagonal=False)
-        return path
-
     def reset(self, obs, goal_objects = None, output_dir = None, env_api = None, rooms_name = None, agent_color = [-1, -1, -1], agent_id = 0, gt_mask = True, save_img = True):
+        self.force_ignore = []
+        self.agent_memory = AgentMemory(agent_id = self.agent_id, agent_color = agent_color, output_dir = output_dir, gt_mask=self.gt_mask, gt_behavior=True, env_api=env_api, constraint_type = None, map_size = self.map_size, scene_bounds = self._scene_bounds)
         self.invalid_count = 0
         self.obs = obs
         self.env_api = env_api
@@ -397,17 +269,8 @@ class lm_agent:
         if output_dir is not None:
             self.output_dir = output_dir
         self.last_action = None
-
-        #0: free, 1: occupied, 2: unknown
-        self.occupancy_map = np.zeros(self.map_size, np.int32)
-        #0: unknown, 1: known
-        self.known_map = np.zeros(self.map_size, np.int32)
-        #0: free, 1: target object, 2: container, 3: goal
-        self.object_map = np.zeros(self.map_size, np.int32)
-        #0: unknown; object_id(only target and container)
         self.id_map = np.zeros(self.map_size, np.int32)
-        self.wall_map = np.zeros(self.map_size, np.int32)
-        self.local_occupancy_map = np.zeros(self.map_size, np.int32)
+        self.object_map = np.zeros(self.map_size, np.int32)
 
         self.object_info = {}
         self.object_list = {0: [], 1: [], 2: []}
@@ -449,51 +312,14 @@ class lm_agent:
 
     def move(self, target_pos):
         self.local_step += 1
-        local_known_map = self.dep2map()
-        if self.local_step % self.space_upd_freq == 0:
-            print("update local map")
-            self.local_occupancy_map = copy.deepcopy(self.occupancy_map)
-        self.known_map = np.maximum(self.known_map, local_known_map)
-        path = self.find_shortest_path(self.position, target_pos, self.local_occupancy_map)
-        i, j = path[min(5, len(path) - 1)]
-        x, z = self.map2pos(i, j)
-        angle = self.get_angle(forward=np.array(self.forward),
-                               origin=np.array(self.position),
-                               position=np.array([x, 0, z]))
-        if np.abs(angle) < ANGLE:
-            action = {"type": 0}
-        elif angle > 0:
-            action = {"type": 1}
-        else:
-            action = {"type": 2}
+        action, path_len = self.agent_memory.move_to_pos(target_pos)
         return action
-
-    def draw_map(self, previous_name):
-        draw_map = np.zeros((self.map_size[0], self.map_size[1], 3))
-        for i in range(self.map_size[0]):
-            for j in range(self.map_size[1]):
-                if self.occupancy_map[i, j] > 0:
-                    draw_map[i, j] = 100
-                if self.known_map[i, j] == 0:
-                #    assert self.occupancy_map[i, j] == 0
-                    draw_map[i, j] = 50
-                if self.wall_map[i, j] > 0:
-                    draw_map[i, j] = 150
-        draw_map[np.where(self.object_map == 1)] = [255, 0, 0]
-        draw_map[np.where(self.object_map == 2)] = [0, 255, 0]
-        draw_map[np.where(self.object_map == 3)] = [0, 0, 255]
-        if self.oppo_pos is not None:
-            draw_map[self.pos2map(self.oppo_pos[0], self.oppo_pos[2])] = [0, 255, 255]
-        draw_map[self.pos2map(self.obs["agent"][0], self.obs["agent"][2])] = [255, 255, 0]
-        #rotate the map 90 degrees anti-clockwise
-        draw_map = np.rot90(draw_map, 1)
-        cv2.imwrite(previous_name + '_map.png', draw_map)
-        #cv2.imwrite(previous_name + '_seg_map.png', self.obs['seg_mask'])
 
     def gotoroom(self):
         target_room = ' '.join(self.plan.split(' ')[2: 4])
         if target_room[-1] == ',': target_room = target_room[:-1]
-        print(target_room)
+        if self.debug:
+            print(target_room)
         target_pos = self.env_api['center_of_room'](target_room)
         if self.current_room == target_room and self.room_distance == 0:
             self.plan = None
@@ -621,8 +447,6 @@ class lm_agent:
             for i in range(len(obs["messages"])):
                 if obs["messages"][i] is not None:
                     self.dialogue_history.append(f"{self.agent_names[i]}: {copy.deepcopy(obs['messages'][i])}")
-        if self.obs['status'] == 0: # ongoing
-            return {'type': 'ongoing'}
     
         self.position = self.obs["agent"][:3]
         self.forward = self.obs["agent"][3:]
@@ -689,6 +513,44 @@ class lm_agent:
             self.dropping_object = []
             self.plan = None
 
+        ignore_obstacles = []
+        ignore_ids = []
+        self.with_character = [self.agent_id]
+        temp_with_oppo = []
+        for x in self.obs["held_objects"]:
+            if x is None or x["id"] is None:
+                continue
+            self.with_character.append(x["id"])
+            if "contained" in x:
+                for y in x["contained"]:
+                    if y is not None:
+                        self.with_character.append(y)
+
+        for x in self.force_ignore:
+            self.with_character.append(x)
+
+        for x in self.obs["oppo_held_objects"]:
+            if x is None or x["id"] is None:
+                continue
+            temp_with_oppo.append(x["id"])
+            if "contained" in x:
+                for y in x["contained"]:
+                    if y is not None:
+                        temp_with_oppo.append(y)
+
+        ignore_obstacles = self.with_character + ignore_obstacles
+        ignore_ids = self.with_character + ignore_ids
+        ignore_ids = temp_with_oppo + ignore_ids
+        ignore_ids += self.satisfied
+        ignore_obstacles += self.satisfied
+
+        self.agent_memory.update(
+            obs, ignore_ids=ignore_ids, ignore_obstacles=ignore_obstacles, save_img = self.save_img
+        )
+
+        if self.obs['status'] == 0: # ongoing
+            return {'type': 'ongoing'}
+
         self.get_new_object_list()
         print(self.new_object_list)
         self.get_object_list()
@@ -700,10 +562,6 @@ class lm_agent:
                 'visible_objects': self.filtered(self.obs['visible_objects']),
                 'obs': {k: v for k, v in self.obs.items() if k not in ['rgb', 'depth', 'seg_mask', 'camera_matrix', 'visible_objects']},
               }
-
-        # save occupancy map:
-        if self.save_img:
-            self.draw_map(previous_name=f'{self.output_dir}/Images/{self.agent_id}/{self.steps:04}')
 
         action = None
         lm_times = 0
