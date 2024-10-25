@@ -3,6 +3,7 @@ backoff==2.2.1
 cloudpickle==2.2.0
 dominate==2.9.1
 Flask==2.2.2
+Werkzeug==2.2.2
 graphviz==0.20.1
 ipdb==0.13.11
 matplotlib==3.6.3
